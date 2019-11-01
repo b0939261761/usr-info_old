@@ -24,7 +24,6 @@ const getProxy = async ({ proxies, currentProxyIndex }) => {
 
   const proxy = list[currentIndex];
   const timeout = process.env.REPEAT_PROXY_TIMEOUT * 1000 - Date.now() + proxy.lastActive;
-  console.log('getProxy', timeout, timeout);
   if (timeout > 0) await delay(timeout);
 
   return { proxies: list, currentProxyIndex: currentIndex, proxy };
