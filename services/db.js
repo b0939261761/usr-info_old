@@ -9,9 +9,9 @@ const connect = `postgres://${process.env.POSTGRES_USER}:${process.env.POSTGRES_
 const connection = createPool(connect, { interceptors });
 
 exports.getProxies = async () => (await connection.query(sql`
-  SELECT id, server, "lastActive" FROM "Proxies" WHERE active = true ORDER BY id
+  SELECT id, server, "lastActive" FROM "Proxies"
+    WHERE active = true ORDER BY "lastActive" NULLS FIRST, id
 `)).rows;
-
 
 exports.setDisableProxy = id => connection.query(sql`
   UPDATE "Proxies" SET active = false WHERE id = ${id}
@@ -29,19 +29,18 @@ exports.addOrganization = org => {
   const {
     code = '',
     fullName = '',
-    fullNameEn = '',
+    person = '',
     address = '',
     phone = ''
   } = org;
 
   return connection.query(sql`
-    INSERT INTO "Organization" (code, "fullName", "fullNameEn", "address", "phone")
-      VALUES (${code}, ${fullName}, ${fullNameEn}, ${address}, ${phone})
+    INSERT INTO "Organization" (code, "fullName", person, address, phone)
+      VALUES (${code}, ${fullName}, ${person}, ${address}, ${phone})
       ON CONFLICT (code) DO UPDATE SET
-        "captchaId" = EXCLUDED."captchaId",
         "fullName" = EXCLUDED."fullName",
-        "fullNameEn" = EXCLUDED."fullNameEn",
-        "address" = EXCLUDED."address",
-        "phone" = EXCLUDED."phone";
+        person = EXCLUDED.person,
+        address = EXCLUDED.address,
+        phone = EXCLUDED.phone;
   `);
 };

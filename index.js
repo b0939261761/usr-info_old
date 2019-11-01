@@ -10,7 +10,6 @@ const db = require('./services/db');
 const { getCaptchaBalance } = require('./services/captcha');
 const parse = require('./services/parse');
 
-
 // -----------------------------
 
 const getProxy = async ({ proxies, currentProxyIndex }) => {
@@ -36,7 +35,7 @@ const getProxy = async ({ proxies, currentProxyIndex }) => {
     try {
       ({ proxies, currentProxyIndex, proxy } = await getProxy({ proxies, currentProxyIndex }));
       if ((await getCaptchaBalance()) < 1) throw new Error('CAPTCHA_NO_BALANCE');
-      const code = nextCode((await db.getLastCode()) || '40200214');
+      const code = nextCode((await db.getLastCode()) || '40200240');
 
       console.log(proxy);
       const org = await parse({ proxy, code });
@@ -49,11 +48,3 @@ const getProxy = async ({ proxies, currentProxyIndex }) => {
     }
   }
 })();
-
-// const org = {
-//   code: '40200214',
-//   fullName: 'ТОВАРИСТВО З ОБМЕЖЕНОЮ ВІДПОВІДАЛЬНІСТЮ "СЕРВ РЕАЛІТІ" (ТОВ "СЕРВ РЕАЛІТІ")',
-//   fullNameEn: 'LIMITED LIABILITY COMPANY "SERVREALITY" (LLC "SERVREALITY")'
-// // address: '01023, м.Київ, СПОРТИВНА ПЛОЩА, будинок 1А'
-// // phone: 'Телефон 1: +380975905482'
-// };

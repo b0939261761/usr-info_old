@@ -26,7 +26,7 @@ const getCaptcha = async key => {
 
 const getTableValues = el => ({
   fullName: el.rows[0].cells[1].textContent,
-  fullNameEn: el.rows[1].cells[1].textContent,
+  person: el.rows[11].cells[1].textContent,
   address: el.rows[6].cells[1].textContent,
   phone: el.rows[31].cells[1].textContent
 });
