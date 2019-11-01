@@ -2,7 +2,7 @@
 
 const puppeteer = require('puppeteer');
 const { delay } = require('../utils/tools');
-const { setCaptchaToken, getCaptchaToken } = require('../services/captcha');
+const { setCaptchaToken, getCaptchaToken } = require('./captcha');
 
 // -----------------------------------
 

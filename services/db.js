@@ -8,17 +8,12 @@ const connect = `postgres://${process.env.POSTGRES_USER}:${process.env.POSTGRES_
 
 const connection = createPool(connect, { interceptors });
 
-exports.getProxy = async () => (await connection.maybeOne(sql`
+exports.getProxy = () => connection.maybeOne(sql`
   SELECT id, server, "lastActive" FROM "Proxies"
     WHERE active = true
     ORDER BY "lastActive" NULLS FIRST, id
     LIMIT 1;
-`)).rows;
-
-exports.getProxies = async () => (await connection.query(sql`
-  SELECT id, server, "lastActive" FROM "Proxies"
-    WHERE active = true ORDER BY "lastActive" NULLS FIRST, id;
-`)).rows;
+`);
 
 exports.setDisableProxy = id => connection.query(sql`
   UPDATE "Proxies" SET active = false WHERE id = ${id}
