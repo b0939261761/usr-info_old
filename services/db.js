@@ -25,8 +25,23 @@ exports.getLastCode = async () => (await connection.one(sql`
   SELECT COALESCE(MAX(code), '') AS code FROM "Organization"
 `)).code;
 
-exports.addOrganization = async org => connection.query(sql`
-  INSERT INTO "Organization" (code, "captchaId", "fullName", "fullNameEn", "address", "phone")
-    VALUES (${org.code}, ${org.captchaId}, ${org.fullName},
-      ${org.fullNameEn}, ${org.address}, ${org.phone})
-`);
+exports.addOrganization = org => {
+  const {
+    code = '',
+    fullName = '',
+    fullNameEn = '',
+    address = '',
+    phone = ''
+  } = org;
+
+  return connection.query(sql`
+    INSERT INTO "Organization" (code, "fullName", "fullNameEn", "address", "phone")
+      VALUES (${code}, ${fullName}, ${fullNameEn}, ${address}, ${phone})
+      ON CONFLICT (code) DO UPDATE SET
+        "captchaId" = EXCLUDED."captchaId",
+        "fullName" = EXCLUDED."fullName",
+        "fullNameEn" = EXCLUDED."fullNameEn",
+        "address" = EXCLUDED."address",
+        "phone" = EXCLUDED."phone";
+  `);
+};

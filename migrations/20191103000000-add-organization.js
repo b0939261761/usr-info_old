@@ -5,7 +5,7 @@ module.exports = {
     CREATE TABLE "${tableName}" (
       id SERIAL PRIMARY KEY,
       code VARCHAR(9) NOT NULL DEFAULT '' UNIQUE,
-      "captchaId" INTEGER NOT NULL DEFAULT 0,
+      "captchaId" BIGINT NOT NULL DEFAULT 0,
       "fullName" TEXT NOT NULL DEFAULT '',
       "fullNameEn" TEXT NOT NULL DEFAULT '',
       "address" TEXT NOT NULL DEFAULT '',

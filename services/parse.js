@@ -4,47 +4,22 @@ const puppeteer = require('puppeteer');
 const { delay } = require('../utils/tools');
 const { setCaptchaToken, getCaptchaToken } = require('../services/captcha');
 
-const GET_CAPTCHA_TOKEN_MAX_TIMEOUT = 120_000;
-const GET_CAPTCHA_TOKEN_FIRST_TIMEOUT = 5_000;
-const GET_CAPTCHA_TOKEN_NEXT_TIMEOUT = 5_000;
-
-// -----------------------------------
-
-const goToPage = async browser => {
-  const { 0: page } = await browser.pages();
-  await page.setUserAgent(process.env.USER_AGENT);
-
-  try {
-    await page.goto(process.env.SITE_URL, { timeout: process.env.NAVIGATION_TIMEOUT });
-    return page;
-  } catch (err) {
-    if (
-      err instanceof puppeteer.errors.TimeoutError
-    || err.message.startsWith('net::ERR_CERT_AUTHORITY_INVALID')
-    ) {
-      await browser.close();
-      throw new Error('INVALID_PROXY');
-    }
-
-    throw new Error(err);
-  }
-};
-
 // -----------------------------------
 
 const getCaptcha = async key => {
-  const id = await setCaptchaToken(key);
-  const timestamp = Date.now();
-  let token;
+  const id = 0 || await setCaptchaToken(key);
+  const maxTimestamp = Date.now() + process.env.GET_CAPTCHA_TOKEN_MAX_TIMEOUT * 1000;
 
-  await delay(GET_CAPTCHA_TOKEN_FIRST_TIMEOUT);
-  while (GET_CAPTCHA_TOKEN_MAX_TIMEOUT - new Date() + timestamp > 0) {
-    token = await getCaptchaToken(id);
-    console.log('getToken');
-    if (token) break;
-    await delay(GET_CAPTCHA_TOKEN_NEXT_TIMEOUT);
-  }
-  return { id, token };
+  if (!id) throw new Error('CAPTCHA_NO_ID');
+
+  await delay(process.env.GET_CAPTCHA_TOKEN_FIRST_TIMEOUT * 1000);
+  do {
+    const token = await getCaptchaToken(id);
+    if (token) return token;
+    await delay(process.env.GET_CAPTCHA_TOKEN_NEXT_TIMEOUT * 1000);
+  } while (Date.now() < maxTimestamp);
+
+  throw new Error('CAPTCHA_NO_TOKEN');
 };
 
 // -----------------------------------
@@ -60,33 +35,56 @@ const getTableValues = el => ({
 
 module.exports = async ({ proxy, code }) => {
   const browser = await puppeteer.launch({
-    // args: [`--proxy-server=${proxy.server}`],
+    args: [`--proxy-server=${proxy.server}`],
     headless: process.env.NODE_ENV === 'production'
   });
 
-  const page = await goToPage(browser);
+  try {
+    const { 0: page } = await browser.pages();
+    page.setDefaultTimeout(process.env.NAVIGATION_TIMEOUT * 1000);
+    await page.setUserAgent(process.env.USER_AGENT);
+    await page.goto(process.env.SITE_URL);
 
-  await page.click('#yurcheck');
-  await page.$eval('#query', (el, val) => { el.value = val; }, code);
+    // Выбор кода
+    await page.click('#yurcheck');
+    await page.$eval('#query', (el, val) => { el.value = val; }, code);
+    await page.click('input[type=submit]');
 
-  await page.click('input[type=submit]');
+    // Отправка captcha
+    const reCaptcha = await page.waitForSelector('.g-recaptcha');
+    const captchaKey = await reCaptcha.evaluate(el => el.dataset.sitekey);
+    const captchaToken = await getCaptcha(captchaKey);
+    await page.$eval('#g-recaptcha-response', (el, val) => { el.value = val; }, captchaToken);
+    await page.click('input[type=submit]');
 
-  const captchaKey = await page.$eval('.g-recaptcha', el => el.dataset.sitekey);
-  console.log('captchaKey', captchaKey);
+    // Ответ от сервера
+    const elem = await Promise.race([
+      page.waitForSelector('form.detailinfo input[type=submit]'),
+      page.waitForSelector('div.ui-state-error')
+    ]);
 
-  const { id: captchaId, token: captchaToken } = await getCaptcha(captchaKey);
-  console.log('captchaToken', captchaToken);
-  console.log('captchaId', captchaId);
+    if ((await elem.evaluate(el => el.tagName)) === 'DIV') {
+      // Ошибка
+      if (await elem.$eval('p', el => el.textContent.includes('знайдено'))) {
+        return { code, fullName: 'NOT_FOUND' };
+      }
+      throw new Error('INVALID_PROXY');
+    } else {
+      // Собираем основные данные
+      await elem.click();
+      const table = await page.waitForSelector('table#detailtable');
+      const tableValues = await table.evaluate(getTableValues);
+      return { code, ...tableValues };
+    }
+  } catch (err) {
+    if (
+      err instanceof puppeteer.errors.TimeoutError
+    || err.message.startsWith('net::ERR_CERT_AUTHORITY_INVALID')
+    || err.message.startsWith('net::ERR_TIMED_OUT')
+    ) throw new Error('INVALID_PROXY');
 
-  await page.$eval('#g-recaptcha-response', (el, val) => { el.value = val; }, captchaToken);
-
-  await page.click('input[type=submit]');
-
-  await page.click('form.detailinfo input[type=submit]');
-
-  const tableValues = await page.$eval('table#detailtable', getTableValues);
-
-  // await browser.close();
-
-  return { code, captchaId, ...tableValues };
+    throw new Error(err);
+  } finally {
+    await browser.close();
+  }
 };
