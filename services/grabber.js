@@ -26,9 +26,15 @@ const getCaptcha = async key => {
 
 const getTableValues = el => ({
   fullName: el.rows[0].cells[1].textContent,
-  person: el.rows[11].cells[1].textContent,
+  legalForm: el.rows[2].cells[1].textContent,
+  name: el.rows[3].cells[1].textContent,
   address: el.rows[6].cells[1].textContent,
-  phone: el.rows[31].cells[1].textContent
+  founders: el.rows[7].cells[1].textContent,
+  dataAuthorizedCapital: el.rows[8].cells[1].textContent,
+  activities: el.rows[9].cells[1].textContent,
+  persons: el.rows[11].cells[1].textContent,
+  dateAndRecordNumber: el.rows[12].cells[1].textContent,
+  contacts: el.rows[31].cells[1].textContent
 });
 
 // -----------------------------------
@@ -66,7 +72,7 @@ module.exports = async ({ proxy, code }) => {
     if ((await elem.evaluate(el => el.tagName)) === 'DIV') {
       // Ошибка
       if (await elem.$eval('p', el => el.textContent.includes('знайдено'))) {
-        return { code, fullName: 'NOT_FOUND' };
+        return { code };
       }
       throw new Error('INVALID_PROXY');
     } else {

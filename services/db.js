@@ -29,43 +29,70 @@ exports.setLastActiveProxy = id => connection.query(sql`
   UPDATE "Proxies" SET "lastActive" = TO_TIMESTAMP(${Date.now() / 1000}) WHERE id = ${id};
 `);
 
-
-exports.addProxy = org => {
-  const {
-    code = '',
-    fullName = '',
-    person = '',
-    address = '',
-    phone = ''
-  } = org;
-
-  return connection.query(sql`
-    INSERT INTO "Proxies" (server)
-      VALUES ('test')
-      ON CONFLICT (server) DO UPDATE NOTHING;
-  `);
-};
+exports.addProxies = async servers => connection.query(sql`
+  INSERT INTO "Proxies" (server)
+    SELECT * FROM
+      ${sql.unnest([...servers.map(el => [el])], ['text'])}
+    ON CONFLICT (server) DO NOTHING;
+`);
 
 exports.getLastCode = async () => (await connection.one(sql`
-  SELECT COALESCE(MAX(code), '') AS code FROM "Organization";
+  SELECT COALESCE(MAX(code), '') AS code FROM "Organizations";
 `)).code;
+
+// ----------------------
+
+exports.getOrganizations = async (where = {}) => {
+  const createWhereFragment = ({ status, date }) => {
+    if (date && status) return sql.raw('WHERE date("updatedAt") = $1 AND status = $2', [date, status]);
+    if (date) return sql.raw('WHERE date("updatedAt") = $1', [date]);
+    if (status) return sql.raw('WHERE status = $1', [status]);
+    return sql.raw('');
+  };
+
+  return (await connection.query(sql`
+    SELECT * FROM "Organizations" ${createWhereFragment(where)}
+  `)).rows;
+};
 
 exports.addOrganization = org => {
   const {
     code = '',
+    status,
     fullName = '',
-    person = '',
+    legalForm = '',
+    name = '',
     address = '',
-    phone = ''
+    founders = '',
+    dataAuthorizedCapital = '',
+    activities = '',
+    persons = '',
+    dateAndRecordNumber = '',
+    contacts = ''
   } = org;
 
   return connection.query(sql`
-    INSERT INTO "Organization" (code, "fullName", person, address, phone)
-      VALUES (${code}, ${fullName}, ${person}, ${address}, ${phone})
+    INSERT INTO "Organizations" (status, code, "fullName", "legalForm", name,
+      address, founders, "dataAuthorizedCapital", activities,
+      persons, "dateAndRecordNumber", contacts)
+      VALUES (${status}, ${code}, ${fullName}, ${legalForm}, ${name},
+        ${address}, ${founders}, ${dataAuthorizedCapital}, ${activities},
+        ${persons}, ${dateAndRecordNumber}, ${contacts})
       ON CONFLICT (code) DO UPDATE SET
+        status = EXCLUDED."status",
         "fullName" = EXCLUDED."fullName",
-        person = EXCLUDED.person,
+        "legalForm" = EXCLUDED."legalForm",
+        name = EXCLUDED.name,
         address = EXCLUDED.address,
-        phone = EXCLUDED.phone;
+        founders = EXCLUDED.founders,
+        "dataAuthorizedCapital" = EXCLUDED."dataAuthorizedCapital",
+        activities = EXCLUDED.activities,
+        persons = EXCLUDED.persons,
+        "dateAndRecordNumber" = EXCLUDED."dateAndRecordNumber",
+        contacts = EXCLUDED.contacts;
   `);
 };
+
+exports.setStatusOrganizations = ({ ids, status }) => connection.query(sql`
+  UPDATE "Organizations" SET status = ${status} WHERE id = ANY(${sql.array(ids, 'int4')})
+`);
