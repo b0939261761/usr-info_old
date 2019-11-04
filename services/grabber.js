@@ -24,18 +24,21 @@ const getCaptcha = async key => {
 
 // -----------------------------------
 
-const getTableValues = el => ({
-  fullName: el.rows[0].cells[1].textContent,
-  legalForm: el.rows[2].cells[1].textContent,
-  name: el.rows[3].cells[1].textContent,
-  address: el.rows[6].cells[1].textContent,
-  founders: el.rows[7].cells[1].textContent,
-  dataAuthorizedCapital: el.rows[8].cells[1].textContent,
-  activities: el.rows[9].cells[1].textContent,
-  persons: el.rows[11].cells[1].textContent,
-  dateAndRecordNumber: el.rows[12].cells[1].textContent,
-  contacts: el.rows[31].cells[1].textContent
-});
+const getTableValues = el => {
+  const getCell = row => row.cells[1].innerHTML.replace(/(<br>)|(<hr>)/g, '\n');
+  return {
+    fullName: getCell(el.rows[0]),
+    legalForm: getCell(el.rows[2]),
+    name: getCell(el.rows[3]),
+    address: getCell(el.rows[6]),
+    founders: getCell(el.rows[7]),
+    dataAuthorizedCapital: getCell(el.rows[8]),
+    activities: getCell(el.rows[9]),
+    persons: getCell(el.rows[11]),
+    dateAndRecordNumber: getCell(el.rows[12]),
+    contacts: getCell(el.rows[31])
+  };
+};
 
 // -----------------------------------
 
@@ -58,9 +61,10 @@ module.exports = async ({ proxy, code }) => {
 
     // Отправка captcha
     const reCaptcha = await page.waitForSelector('.g-recaptcha');
+    const reCaptchaResponse = await page.waitForSelector('#g-recaptcha-response');
     const captchaKey = await reCaptcha.evaluate(el => el.dataset.sitekey);
     const captchaToken = await getCaptcha(captchaKey);
-    await page.$eval('#g-recaptcha-response', (el, val) => { el.value = val; }, captchaToken);
+    await reCaptchaResponse.evaluate((el, val) => { el.value = val; }, captchaToken);
     await page.click('input[type=submit]');
 
     // Ответ от сервера
@@ -87,6 +91,7 @@ module.exports = async ({ proxy, code }) => {
       err instanceof puppeteer.errors.TimeoutError
     || err.message.startsWith('net::ERR_CERT_AUTHORITY_INVALID')
     || err.message.startsWith('net::ERR_TIMED_OUT')
+    || err.message.startsWith('net::ERR_PROXY_CONNECTION_FAILED')
     ) throw new Error('INVALID_PROXY');
 
     throw new Error(err);

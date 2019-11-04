@@ -7,7 +7,6 @@ const { getCaptchaBalance } = require('./captcha');
 const grabber = require('./grabber');
 const { sendErrorMail } = require('./mail');
 
-
 // -----------------------------
 
 const getProxy = async () => {
@@ -52,13 +51,12 @@ module.exports = async () => {
   for (let proxy; ;) {
     try {
       proxy = await getProxy();
+      console.log(proxy);
       if ((await getCaptchaBalance()) < 1) throw new Error('CAPTCHA_NO_BALANCE');
       const code = nextCode((await db.getLastCode()) || '40200240');
       const org = await grabber({ proxy, code });
       const status = setStatusOrganization(org);
       await db.addOrganization({ ...org, status });
-      await db.setLastActiveProxy(proxy.id);
-
       await sendContacts();
     } catch (err) {
       const errMessage = err.message;
@@ -70,6 +68,8 @@ module.exports = async () => {
         prevError = err;
         await delay(process.env.ERROR_TIMEOUT * 1000);
       }
+    } finally {
+      await db.setLastActiveProxy(proxy.id);
     }
   }
 };
