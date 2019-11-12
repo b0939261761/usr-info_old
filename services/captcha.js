@@ -5,12 +5,6 @@ const http = axios.create({
   params: { key: process.env.RUCAPTCHA_KEY, json: 1 }
 });
 
-
-// const URL_GET_TOKEN = `https://rucaptcha.com/in.php?key=${key}&method=userrecaptcha&googlekey=6Le-wvkSVVABCPBMRTvw0Q4Muexq1bi0DJwx_mJ-&pageurl=http://mysite.com/page/with/recaptcha
-
-// https:// rucaptcha.com/in.php?key=1abc234de56fab7c89012d34e56fa7b8&method=userrecaptcha&googlekey=6Le-wvkSVVABCPBMRTvw0Q4Muexq1bi0DJwx_mJ-&pageurl=http://mysite.com/page/with/recaptcha
-
-
 // --------- checkBalance --------
 
 exports.getCaptchaBalance = async () => {
@@ -25,7 +19,7 @@ exports.setCaptchaToken = async key => {
     params: {
       method: 'userrecaptcha',
       googlekey: key,
-      pageurl: 'https://usrinfo.minjust.gov.ua/edr.html'
+      pageurl: process.env.SITE_URL
     }
   });
   const { status, request } = response.data;

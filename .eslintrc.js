@@ -29,5 +29,7 @@ module.exports = {
 
     // Disallow Reassignment of Function Parameters (no-param-reassign)
     'no-param-reassign': ['error', { props: true, ignorePropertyModificationsFor: ['el'] }],
+
+    'no-unused-vars': ['error', { argsIgnorePattern: '^(req|res|next)$' }],
   }
 };

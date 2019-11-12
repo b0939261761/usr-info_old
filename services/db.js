@@ -44,14 +44,15 @@ exports.getLastCode = async () => (await connection.one(sql`
 
 exports.getOrganizations = async (where = {}) => {
   const createWhereFragment = ({ status, date }) => {
-    if (date && status) return sql.raw('WHERE date("updatedAt") = $1 AND status = $2', [date, status]);
-    if (date) return sql.raw('WHERE date("updatedAt") = $1', [date]);
-    if (status) return sql.raw('WHERE status = $1', [status]);
-    return sql.raw('');
+    if (date && status) return sql`WHERE date("updatedAt") = ${date} AND status = ${status}`;
+    if (date) return sql`WHERE date("updatedAt") = ${date}`;
+    if (status) return sql`WHERE status = ${status}`;
+    return sql``;
   };
 
   return (await connection.query(sql`
     SELECT * FROM "Organizations" ${createWhereFragment(where)}
+      ORDER BY code
   `)).rows;
 };
 
@@ -65,19 +66,21 @@ exports.addOrganization = org => {
     address = '',
     founders = '',
     dataAuthorizedCapital = '',
+    activity = '',
     activities = '',
     persons = '',
     dateAndRecordNumber = '',
-    contacts = ''
+    contacts = '',
+    stayInformation = ''
   } = org;
 
   return connection.query(sql`
     INSERT INTO "Organizations" (status, code, "fullName", "legalForm", name,
-      address, founders, "dataAuthorizedCapital", activities,
-      persons, "dateAndRecordNumber", contacts)
+      address, founders, "dataAuthorizedCapital", activity, activities,
+      persons, "dateAndRecordNumber", contacts, "stayInformation")
       VALUES (${status}, ${code}, ${fullName}, ${legalForm}, ${name},
-        ${address}, ${founders}, ${dataAuthorizedCapital}, ${activities},
-        ${persons}, ${dateAndRecordNumber}, ${contacts})
+        ${address}, ${founders}, ${dataAuthorizedCapital}, ${activity}, ${activities},
+        ${persons}, ${dateAndRecordNumber}, ${contacts}, ${stayInformation})
       ON CONFLICT (code) DO UPDATE SET
         status = EXCLUDED."status",
         "fullName" = EXCLUDED."fullName",
@@ -86,10 +89,12 @@ exports.addOrganization = org => {
         address = EXCLUDED.address,
         founders = EXCLUDED.founders,
         "dataAuthorizedCapital" = EXCLUDED."dataAuthorizedCapital",
+        activity = EXCLUDED.activity,
         activities = EXCLUDED.activities,
         persons = EXCLUDED.persons,
         "dateAndRecordNumber" = EXCLUDED."dateAndRecordNumber",
-        contacts = EXCLUDED.contacts;
+        contacts = EXCLUDED.contacts,
+        "stayInformation" = EXCLUDED."stayInformation";
   `);
 };
 

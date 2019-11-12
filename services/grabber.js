@@ -19,32 +19,52 @@ const getCaptcha = async key => {
     await delay(process.env.GET_CAPTCHA_TOKEN_NEXT_TIMEOUT * 1000);
   } while (Date.now() < maxTimestamp);
 
-  throw new Error('CAPTCHA_NO_TOKEN');
+  throw new Error(`CAPTCHA_NO_TOKEN - ${id}`);
 };
 
 // -----------------------------------
 
 const getTableValues = el => {
   const getCell = row => row.cells[1].innerHTML.replace(/(<br>)|(<hr>)/g, '\n');
-  return {
-    fullName: getCell(el.rows[0]),
-    legalForm: getCell(el.rows[2]),
-    name: getCell(el.rows[3]),
-    address: getCell(el.rows[6]),
-    founders: getCell(el.rows[7]),
-    dataAuthorizedCapital: getCell(el.rows[8]),
-    activities: getCell(el.rows[9]),
-    persons: getCell(el.rows[11]),
-    dateAndRecordNumber: getCell(el.rows[12]),
-    contacts: getCell(el.rows[31])
-  };
+  const rowCount = el.querySelectorAll('tr').length;
+
+  if (rowCount === 32) {
+    return {
+      fullName: getCell(el.rows[0]),
+      legalForm: getCell(el.rows[2]),
+      name: getCell(el.rows[3]),
+      address: getCell(el.rows[6]),
+      founders: getCell(el.rows[7]),
+      dataAuthorizedCapital: getCell(el.rows[8]),
+      activities: getCell(el.rows[9]),
+      persons: getCell(el.rows[11]),
+      dateAndRecordNumber: getCell(el.rows[12]),
+      activity: getCell(el.rows[27]),
+      contacts: getCell(el.rows[31])
+    };
+  } if (rowCount === 18) {
+    return {
+      fullName: getCell(el.rows[0]),
+      legalForm: getCell(el.rows[1]),
+      name: getCell(el.rows[2]),
+      address: getCell(el.rows[4]),
+      persons: getCell(el.rows[6]),
+      dateAndRecordNumber: getCell(el.rows[7]),
+      activity: getCell(el.rows[14])
+    };
+  }
+
+  throw new Error('STRUCTURE_ERROR');
 };
 
 // -----------------------------------
 
 module.exports = async ({ proxy, code }) => {
   const browser = await puppeteer.launch({
-    args: [`--proxy-server=${proxy.server}`],
+    args: [
+      `--proxy-server=${proxy.server}`,
+      '--no-sandbox'
+    ],
     headless: process.env.NODE_ENV === 'production'
   });
 
@@ -60,16 +80,15 @@ module.exports = async ({ proxy, code }) => {
     await page.click('input[type=submit]');
 
     // Отправка captcha
-    const reCaptcha = await page.waitForSelector('.g-recaptcha');
     const reCaptchaResponse = await page.waitForSelector('#g-recaptcha-response');
-    const captchaKey = await reCaptcha.evaluate(el => el.dataset.sitekey);
+    const captchaKey = await page.$eval('.g-recaptcha', el => el.dataset.sitekey);
     const captchaToken = await getCaptcha(captchaKey);
     await reCaptchaResponse.evaluate((el, val) => { el.value = val; }, captchaToken);
     await page.click('input[type=submit]');
 
     // Ответ от сервера
     const elem = await Promise.race([
-      page.waitForSelector('form.detailinfo input[type=submit]'),
+      page.waitForSelector('#restable'),
       page.waitForSelector('div.ui-state-error')
     ]);
 
@@ -81,10 +100,11 @@ module.exports = async ({ proxy, code }) => {
       throw new Error('INVALID_PROXY');
     } else {
       // Собираем основные данные
-      await elem.click();
+      const stayInformation = await elem.evaluate(el => el.rows[1].cells[3].textContent);
+      await page.click('form.detailinfo input[type=submit]');
       const table = await page.waitForSelector('table#detailtable');
       const tableValues = await table.evaluate(getTableValues);
-      return { code, ...tableValues };
+      return { code, stayInformation, ...tableValues };
     }
   } catch (err) {
     if (

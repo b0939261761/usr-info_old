@@ -1,5 +1,4 @@
 /* eslint-disable no-await-in-loop */
-
 const { delay } = require('../utils/tools');
 const { nextCode } = require('../utils/code');
 const db = require('./db');
@@ -24,10 +23,10 @@ const getProxy = async () => {
 const setStatusOrganization = org => {
   let status = 'unsuitable';
 
-  if (org.fullName === '') {
+  if (!org.fullName) {
     status = 'invalid';
     // Прикрутить фильтрацию
-  } else if (org.fullName !== '') {
+  } else if (org.fullName) {
     status = 'suitable';
   }
 
@@ -45,15 +44,15 @@ const sendContacts = async () => {
 
 // ------------------------
 
-module.exports = async () => {
+(async () => {
   let prevError = new Error('');
 
   for (let proxy; ;) {
     try {
       proxy = await getProxy();
-      console.log(proxy);
       if ((await getCaptchaBalance()) < 1) throw new Error('CAPTCHA_NO_BALANCE');
-      const code = nextCode((await db.getLastCode()) || '40200240');
+      const code = nextCode((await db.getLastCode()) || '43311880');
+      console.log(code, proxy);
       const org = await grabber({ proxy, code });
       const status = setStatusOrganization(org);
       await db.addOrganization({ ...org, status });
@@ -65,11 +64,12 @@ module.exports = async () => {
         await db.setDisableProxy(proxy.id);
       } else {
         if (errMessage !== prevError.message) await sendErrorMail(err);
+        if (errMessage === 'STRUCTURE_ERROR') return;
         prevError = err;
         await delay(process.env.ERROR_TIMEOUT * 1000);
       }
     } finally {
-      await db.setLastActiveProxy(proxy.id);
+      if (proxy) await db.setLastActiveProxy(proxy.id);
     }
   }
-};
+})();

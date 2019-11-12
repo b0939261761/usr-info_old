@@ -21,6 +21,9 @@ npm run serve
 
   # Get balance
   /balance
+
+  # Generate code
+  /generateCode?code=0000000
 ```
 
 for me: [](https://github.com/ThomWright/postgres-migrations)

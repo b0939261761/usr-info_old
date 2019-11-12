@@ -10,17 +10,19 @@ module.exports = {
     CREATE TABLE "${tableName}" (
       id SERIAL PRIMARY KEY,
       "status" "${typeName}" NULL DEFAULT 'unsuitable',
-      code VARCHAR(9) NOT NULL DEFAULT '' UNIQUE,
+      code VARCHAR(8) NOT NULL DEFAULT '' UNIQUE,
       "fullName" TEXT NOT NULL DEFAULT '',
       "legalForm" TEXT NOT NULL DEFAULT '',
       name TEXT NOT NULL DEFAULT '',
       address TEXT NOT NULL DEFAULT '',
       founders TEXT NOT NULL DEFAULT '',
       "dataAuthorizedCapital" TEXT NOT NULL DEFAULT '',
+      activity TEXT NOT NULL DEFAULT '',
       activities TEXT NOT NULL DEFAULT '',
       persons TEXT NOT NULL DEFAULT '',
       "dateAndRecordNumber" TEXT NOT NULL DEFAULT '',
       contacts TEXT NOT NULL DEFAULT '',
+      "stayInformation" TEXT NOT NULL DEFAULT '',
       "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
@@ -35,11 +37,13 @@ module.exports = {
     COMMENT ON COLUMN "${tableName}".name IS 'Назва юридичної особи';
     COMMENT ON COLUMN "${tableName}".address IS 'Місце знаходження юридичної особи';
     COMMENT ON COLUMN "${tableName}".founders IS 'Перелік засновників (учасників) юридичної особи';
-    COMMENT ON COLUMN "${tableName}"."dataAuthorizedCapital" IS 'Перелік засновників (учасників) юридичної особи';
+    COMMENT ON COLUMN "${tableName}"."dataAuthorizedCapital" IS 'Дані про розмір статутного капіталу';
+    COMMENT ON COLUMN "${tableName}".activity IS 'Вид діяльності';
     COMMENT ON COLUMN "${tableName}".activities IS 'Види діяльності';
     COMMENT ON COLUMN "${tableName}".persons IS 'Прізвище, ім"я, по батькові, дата обрання осіб, які обираються до органу управління юридичної особи';
     COMMENT ON COLUMN "${tableName}"."dateAndRecordNumber" IS 'Дата та номер запису в Єдиному державному реєстрі про проведення державної реєстрації юридичної особи';
     COMMENT ON COLUMN "${tableName}".contacts IS 'Інформація про здійснення зв"язку з юридичною особою';
+    COMMENT ON COLUMN "${tableName}"."stayInformation" IS 'Дані про перебування юридичної особи у процесі припинення';
     COMMENT ON COLUMN "${tableName}"."createdAt" IS 'Дата создания записи';
     COMMENT ON COLUMN "${tableName}"."updatedAt" IS 'Дата обновления записи';
 

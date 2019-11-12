@@ -1,5 +1,5 @@
 const nodemailer = require('nodemailer');
-const { formatDateTime } = require('../utils/tools');
+const { formatDate } = require('../utils/date');
 
 const transportOptions = {
   host: 'smtp.googlemail.com',
@@ -16,16 +16,38 @@ const mailOptionsDefault = {
   to: `${process.env.SUPPORT_EMAIL}`
 };
 
+const sendMail = mailOptions => {
+  const transporter = nodemailer.createTransport(transportOptions);
+  return transporter.sendMail(mailOptions);
+};
+
 exports.sendErrorMail = async error => {
   const mailOptions = {
     ...mailOptionsDefault,
-    subject: `🛑 Error [${formatDateTime(new Date())}]: ${error.message.slice(0, 20)}`,
+    subject: `🛑 ERROR [${formatDate('DD.MM.YY HH:mm:ss')}]: ${error.message.slice(0, 30)}`,
     html: `<pre>${error.stack}</pre>`
   };
 
   try {
-    const transporter = nodemailer.createTransport(transportOptions);
-    await transporter.sendMail(mailOptions);
+    await sendMail(mailOptions);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+exports.sendReportMail = async ({ date, content }) => {
+  const mailOptions = {
+    ...mailOptionsDefault,
+    to: `${process.env.SUPPORT_EMAIL},${process.env.CLIENT_EMAIL}`,
+    subject: `🛑 Отчет за ${formatDate('DD.MM.YY', date)}`,
+    attachments: {
+      filename: `report-${formatDate('YYYY-MM-DD', date)}.csv`,
+      content
+    }
+  };
+
+  try {
+    await sendMail(mailOptions);
   } catch (err) {
     console.error(err);
   }
