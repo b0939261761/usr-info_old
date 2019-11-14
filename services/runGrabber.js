@@ -4,30 +4,18 @@ const { nextCode } = require('../utils/code');
 const db = require('./db');
 const { getCaptchaBalance } = require('./captcha');
 const grabber = require('./grabber');
+const Proxy = require('./proxy');
 const { sendErrorMail } = require('./mail');
 
-// -----------------------------
-
-const getProxy = async () => {
-  const proxy = await db.getProxy();
-  if (!proxy) throw new Error('NO_PROXY');
-
-  const timeout = process.env.REPEAT_PROXY_TIMEOUT * 1000 - Date.now() + proxy.lastActive;
-  if (timeout > 0) await delay(timeout);
-
-  return proxy;
-};
+const MIN_BALANCE = 1;
 
 // ------------------------
 
 const setStatusOrganization = org => {
-  let status = 'unsuitable';
+  const status = 'unsuitable';
 
-  if (!org.fullName) {
-    status = 'invalid';
-    // Прикрутить фильтрацию
-  } else if (org.fullName) {
-    status = 'suitable';
+  if (org.fullName) {
+    // status = 'suitable';
   }
 
   return status;
@@ -37,39 +25,42 @@ const setStatusOrganization = org => {
 
 const sendContacts = async () => {
   const organizations = await db.getOrganizations({ status: 'suitable' });
-  if (!organizations.length) return;
-  const ids = organizations.map(el => el.id);
-  await db.setStatusOrganizations({ ids, status: 'send' });
+
+  // eslint-disable-next-line no-restricted-syntax
+  for (const organization of organizations) {
+    // await db.setStatusOrganization({ id: organization.id, status: 'send' });
+  }
 };
 
 // ------------------------
 
 (async () => {
-  let prevError = new Error('');
-
-  for (let proxy; ;) {
+  const proxy = new Proxy();
+  for (let prevError = new Error(''); ;) {
     try {
-      proxy = await getProxy();
-      if ((await getCaptchaBalance()) < 1) throw new Error('CAPTCHA_NO_BALANCE');
+      if ((await getCaptchaBalance()) < MIN_BALANCE) throw new Error('CAPTCHA_NO_BALANCE');
+      const server = await proxy.get();
       const code = nextCode((await db.getLastCode()) || '43311880');
-      console.log(code, proxy);
-      const org = await grabber({ proxy, code });
+      console.log(code);
+      const org = await grabber({ server, code });
+      await proxy.resetError();
       const status = setStatusOrganization(org);
       await db.addOrganization({ ...org, status });
       await sendContacts();
     } catch (err) {
       const errMessage = err.message;
-      console.error(err);
       if (errMessage === 'INVALID_PROXY') {
-        await db.setDisableProxy(proxy.id);
+        await proxy.setError();
+        console.warn(errMessage);
       } else {
+        console.error(err);
         if (errMessage !== prevError.message) await sendErrorMail(err);
         if (errMessage === 'STRUCTURE_ERROR') return;
         prevError = err;
         await delay(process.env.ERROR_TIMEOUT * 1000);
       }
     } finally {
-      if (proxy) await db.setLastActiveProxy(proxy.id);
+      await proxy.setLastActive();
     }
   }
 })();

@@ -6,6 +6,18 @@ const { setCaptchaToken, getCaptchaToken } = require('./captcha');
 
 // -----------------------------------
 
+const netErrors = [
+  'net::ERR_CERT_AUTHORITY_INVALID',
+  'net::ERR_TIMED_OUT',
+  'net::ERR_PROXY_CONNECTION_FAILED',
+  'net::ERR_TUNNEL_CONNECTION_FAILED',
+  'net::ERR_EMPTY_RESPONSE',
+  'net::ERR_CONNECTION_RESET',
+  'net::ERR_SSL_PROTOCOL_ERROR'
+];
+
+// -------------------------------------------------
+
 const getCaptcha = async key => {
   const id = 0 || await setCaptchaToken(key);
   const maxTimestamp = Date.now() + process.env.GET_CAPTCHA_TOKEN_MAX_TIMEOUT * 1000;
@@ -25,32 +37,34 @@ const getCaptcha = async key => {
 // -----------------------------------
 
 const getTableValues = el => {
-  const getCell = row => row.cells[1].innerHTML.replace(/(<br>)|(<hr>)/g, '\n');
+  const replaceTo = (char, row) => row.cells[1].innerHTML.replace(/(<br>)|(<hr>)|(\n&nbsp;\n)/g, char);
+  const replaceToNewLine = replaceTo.bind(null, '\n');
+  const replaceToTrim = replaceTo.bind(null, '');
   const rowCount = el.querySelectorAll('tr').length;
 
   if (rowCount === 32) {
     return {
-      fullName: getCell(el.rows[0]),
-      legalForm: getCell(el.rows[2]),
-      name: getCell(el.rows[3]),
-      address: getCell(el.rows[6]),
-      founders: getCell(el.rows[7]),
-      dataAuthorizedCapital: getCell(el.rows[8]),
-      activities: getCell(el.rows[9]),
-      persons: getCell(el.rows[11]),
-      dateAndRecordNumber: getCell(el.rows[12]),
-      activity: getCell(el.rows[27]),
-      contacts: getCell(el.rows[31])
+      fullName: replaceToTrim(el.rows[0]),
+      legalForm: replaceToNewLine(el.rows[2]),
+      name: replaceToNewLine(el.rows[3]),
+      address: replaceToNewLine(el.rows[6]),
+      founders: replaceToNewLine(el.rows[7]),
+      dataAuthorizedCapital: replaceToNewLine(el.rows[8]),
+      activities: replaceToNewLine(el.rows[9]),
+      persons: replaceToNewLine(el.rows[11]),
+      dateAndRecordNumber: replaceToNewLine(el.rows[12]),
+      activity: replaceToNewLine(el.rows[27]),
+      contacts: replaceToNewLine(el.rows[31])
     };
   } if (rowCount === 18) {
     return {
-      fullName: getCell(el.rows[0]),
-      legalForm: getCell(el.rows[1]),
-      name: getCell(el.rows[2]),
-      address: getCell(el.rows[4]),
-      persons: getCell(el.rows[6]),
-      dateAndRecordNumber: getCell(el.rows[7]),
-      activity: getCell(el.rows[14])
+      fullName: replaceToTrim(el.rows[0]),
+      legalForm: replaceToNewLine(el.rows[1]),
+      name: replaceToNewLine(el.rows[2]),
+      address: replaceToNewLine(el.rows[4]),
+      persons: replaceToNewLine(el.rows[6]),
+      dateAndRecordNumber: replaceToNewLine(el.rows[7]),
+      activity: replaceToNewLine(el.rows[14])
     };
   }
 
@@ -59,10 +73,10 @@ const getTableValues = el => {
 
 // -----------------------------------
 
-module.exports = async ({ proxy, code }) => {
+module.exports = async ({ server, code }) => {
   const browser = await puppeteer.launch({
     args: [
-      `--proxy-server=${proxy.server}`,
+      `--proxy-server=${server}`,
       '--no-sandbox'
     ],
     headless: process.env.NODE_ENV === 'production'
@@ -72,10 +86,11 @@ module.exports = async ({ proxy, code }) => {
     const { 0: page } = await browser.pages();
     page.setDefaultTimeout(process.env.NAVIGATION_TIMEOUT * 1000);
     await page.setUserAgent(process.env.USER_AGENT);
-    await page.goto(process.env.SITE_URL);
+    await page.goto(`${process.env.SITE_URL}/edr.html`);
 
     // Выбор кода
-    await page.click('#yurcheck');
+    const yurcheck = await page.waitForSelector('#yurcheck');
+    await yurcheck.click();
     await page.$eval('#query', (el, val) => { el.value = val; }, code);
     await page.click('input[type=submit]');
 
@@ -92,8 +107,7 @@ module.exports = async ({ proxy, code }) => {
       page.waitForSelector('div.ui-state-error')
     ]);
 
-    if ((await elem.evaluate(el => el.tagName)) === 'DIV') {
-      // Ошибка
+    if ((await elem.evaluate(el => el.tagName)) === 'DIV') { // Ошибка
       if (await elem.$eval('p', el => el.textContent.includes('знайдено'))) {
         return { code };
       }
@@ -107,12 +121,8 @@ module.exports = async ({ proxy, code }) => {
       return { code, stayInformation, ...tableValues };
     }
   } catch (err) {
-    if (
-      err instanceof puppeteer.errors.TimeoutError
-    || err.message.startsWith('net::ERR_CERT_AUTHORITY_INVALID')
-    || err.message.startsWith('net::ERR_TIMED_OUT')
-    || err.message.startsWith('net::ERR_PROXY_CONNECTION_FAILED')
-    ) throw new Error('INVALID_PROXY');
+    if (err instanceof puppeteer.errors.TimeoutError
+      || netErrors.some(el => err.message.startsWith(el))) throw new Error('INVALID_PROXY');
 
     throw new Error(err);
   } finally {

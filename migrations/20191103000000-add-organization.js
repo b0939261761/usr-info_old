@@ -3,14 +3,19 @@ const typeName = `${tableName}Status`;
 
 module.exports = {
   up: knex => knex.raw(`
-    CREATE TYPE "${typeName}" AS ENUM ('invalid', 'unsuitable', 'suitable', 'send');
+    CREATE TYPE "${typeName}" AS ENUM ('unsuitable', 'suitable', 'send');
 
     COMMENT ON TYPE "${typeName}" IS 'Статус записи';
 
     CREATE TABLE "${tableName}" (
       id SERIAL PRIMARY KEY,
-      "status" "${typeName}" NULL DEFAULT 'unsuitable',
+      status "${typeName}" NULL DEFAULT 'unsuitable',
       code VARCHAR(8) NOT NULL DEFAULT '' UNIQUE,
+      manager VARCHAR(254) NOT NULL DEFAULT '',
+      capital INTEGER NOT NULL DEFAULT 0,
+      phone1 VARCHAR(13) NOT NULL DEFAULT '',
+      phone2 VARCHAR(13) NOT NULL DEFAULT '',
+      email VARCHAR(254) NOT NULL DEFAULT '',
       "fullName" TEXT NOT NULL DEFAULT '',
       "legalForm" TEXT NOT NULL DEFAULT '',
       name TEXT NOT NULL DEFAULT '',
@@ -28,10 +33,14 @@ module.exports = {
     );
 
     COMMENT ON table "${tableName}"  IS 'Организации';
-
     COMMENT ON COLUMN "${tableName}".id IS 'Уникальный идентификатор';
     COMMENT ON COLUMN "${tableName}".status IS 'Статус записи';
     COMMENT ON COLUMN "${tableName}".code IS 'Ідентифікаційний код юридичної особи';
+    COMMENT ON COLUMN "${tableName}".manager IS 'Керівник';
+    COMMENT ON COLUMN "${tableName}".capital IS 'Капітал';
+    COMMENT ON COLUMN "${tableName}".phone1 IS 'Телефон 1';
+    COMMENT ON COLUMN "${tableName}".phone2 IS 'Телефон 2';
+    COMMENT ON COLUMN "${tableName}".email IS 'Електронна пошта';
     COMMENT ON COLUMN "${tableName}"."fullName" IS 'Повне найменування юридичної особи та скорочене у разі його наявності';
     COMMENT ON COLUMN "${tableName}"."legalForm" IS 'Організаційно-правова форма';
     COMMENT ON COLUMN "${tableName}".name IS 'Назва юридичної особи';

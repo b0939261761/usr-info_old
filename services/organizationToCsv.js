@@ -7,7 +7,8 @@ const trimSymbol = str => (typeof str === 'string' ? str.replace(patternRemoveDe
 
 const header = [
   '#', 'ID', 'Статус запису', 'Код', 'Повне найменування',
-  'Організаційно-правова форма', 'Назва', 'Місце знаходження',
+  'Організаційно-правова форма', 'Назва', 'Керівник', 'Капітал',
+  'Телефон 1', 'Телефон 2', 'Електронна пошта', 'Місце знаходження',
   'Засновники', 'Дані про розмір статутного капіталу', 'Вид діяльності',
   'Види діяльності', 'Управління', 'Дата та номер запису в реєстрі',
   'Контакти', 'Перебування у процесі припинення',
@@ -16,6 +17,7 @@ const header = [
 
 const cols = [
   'index', 'id', 'status', 'code', 'fullName', 'legalForm', 'name',
+  'manager', 'capital', 'phone1', 'phone2', 'email',
   'address', 'founders', 'dataAuthorizedCapital', 'activity', 'activities', 'persons',
   'dateAndRecordNumber', 'contacts', 'stayInformation', 'createdAt', 'updatedAt'
 ];
