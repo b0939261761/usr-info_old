@@ -51,8 +51,8 @@ exports.getLastCode = async () => (await connection.one(sql`
 
 exports.getOrganizations = async (where = {}) => {
   const createWhereFragment = ({ status, date }) => {
-    if (date && status) return sql`WHERE date("updatedAt") = ${date} AND status = ${status}`;
-    if (date) return sql`WHERE date("updatedAt") = ${date}`;
+    if (date && status) return sql`WHERE date("createdAt") = ${date} AND status = ${status}`;
+    if (date) return sql`WHERE date("createdAt") = ${date}`;
     if (status) return sql`WHERE status = ${status}`;
     return sql``;
   };
@@ -66,7 +66,7 @@ exports.getOrganizations = async (where = {}) => {
 exports.addOrganization = organization => {
   const {
     code = '',
-    status,
+    status = 'none',
     fullName = '',
     legalForm = '',
     name = '',
@@ -119,14 +119,14 @@ exports.addOrganization = organization => {
 };
 
 exports.setStatusOrganization = ({ id, status }) => connection.query(sql`
-  UPDATE "Organizations" SET status = ${status} WHERE id = ${id});
+  UPDATE "Organizations" SET status = ${status} WHERE id = ${id};
 `);
 
 exports.setOrganization = organization => {
   const {
     id,
     code = '',
-    status,
+    status = 'none',
     fullName = '',
     legalForm = '',
     name = '',

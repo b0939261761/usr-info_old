@@ -6,7 +6,7 @@ const { subtractDays, formatDate } = require('../utils/date');
 
 // ---------------
 
-job('00 01 00 * * *', (async () => {
+job('00 15 00 * * *', (async () => {
   try {
     const date = subtractDays(1);
     const organizations = await db.getOrganizations({ date: formatDate('YYYY-MM-DD', date) });

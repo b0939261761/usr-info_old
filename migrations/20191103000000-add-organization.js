@@ -3,13 +3,13 @@ const typeName = `${tableName}Status`;
 
 module.exports = {
   up: knex => knex.raw(`
-    CREATE TYPE "${typeName}" AS ENUM ('unsuitable', 'suitable', 'send');
+    CREATE TYPE "${typeName}" AS ENUM ('none', 'unsuitable', 'send');
 
     COMMENT ON TYPE "${typeName}" IS 'Статус записи';
 
     CREATE TABLE "${tableName}" (
       id SERIAL PRIMARY KEY,
-      status "${typeName}" NULL DEFAULT 'unsuitable',
+      status "${typeName}" NOT NULL DEFAULT 'none',
       code VARCHAR(8) NOT NULL DEFAULT '' UNIQUE,
       manager VARCHAR(254) NOT NULL DEFAULT '',
       capital INTEGER NOT NULL DEFAULT 0,

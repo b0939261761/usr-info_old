@@ -124,7 +124,7 @@ module.exports = async ({ server, code }) => {
     if (err instanceof puppeteer.errors.TimeoutError
       || netErrors.some(el => err.message.startsWith(el))) throw new Error('INVALID_PROXY');
 
-    throw new Error(err);
+    throw err;
   } finally {
     await browser.close();
   }
