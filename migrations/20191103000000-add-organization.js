@@ -16,6 +16,7 @@ module.exports = {
       phone1 VARCHAR(13) NOT NULL DEFAULT '',
       phone2 VARCHAR(13) NOT NULL DEFAULT '',
       email VARCHAR(254) NOT NULL DEFAULT '',
+      "dateRegistration" DATE,
       "fullName" TEXT NOT NULL DEFAULT '',
       "legalForm" TEXT NOT NULL DEFAULT '',
       name TEXT NOT NULL DEFAULT '',
@@ -41,6 +42,7 @@ module.exports = {
     COMMENT ON COLUMN "${tableName}".phone1 IS 'Телефон 1';
     COMMENT ON COLUMN "${tableName}".phone2 IS 'Телефон 2';
     COMMENT ON COLUMN "${tableName}".email IS 'Електронна пошта';
+    COMMENT ON COLUMN "${tableName}"."dateRegistration" IS 'Дата реєстрації';
     COMMENT ON COLUMN "${tableName}"."fullName" IS 'Повне найменування юридичної особи та скорочене у разі його наявності';
     COMMENT ON COLUMN "${tableName}"."legalForm" IS 'Організаційно-правова форма';
     COMMENT ON COLUMN "${tableName}".name IS 'Назва юридичної особи';

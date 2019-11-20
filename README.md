@@ -19,6 +19,9 @@ npm run serve
   # Add proxies
   POST /proxies { "servers": ["server:port", "server:port"] }
 
+  # Get active amount proxies
+  GET /proxies/amount
+
   # Get balance
   /balance
 

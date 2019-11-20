@@ -77,11 +77,11 @@ module.exports = class {
 
   get notesOptions() {
     const notes = [
-      this.fullName,
       `ЄДРПОУ: ${this.organization.code}`,
       `Адреса: ${this.organization.address}`,
       this.organization.activity,
-      `Капітал: ${this.organization.capital}`
+      `Капітал: ${this.organization.capital}`,
+      `Дата реєстрації: ${this.organization.dateRegistration}`
     ];
 
     return { add: notes.map(this.getNoteOptions.bind(this)) };
@@ -110,6 +110,12 @@ module.exports = class {
   }
 
   // -------------------------------
+  static throwError(message, response) {
+    const error = new Error(message);
+    error.response = response;
+    throw error;
+  }
+  // -------------------------------
 
   async send(organization) {
     this.responsibleUserId = this.getResponsibleUserId();
@@ -120,19 +126,23 @@ module.exports = class {
     try {
       await crm.connect();
       const resCompany = await crm.request.post('/api/v2/companies', this.companyOptions);
-      if (!resCompany._embedded
-        || !resCompany._embedded.items) throw new Error(JSON.stringify(resCompany));
+      if (!resCompany._embedded || !resCompany._embedded.items) {
+        this.constructor.throwError('NO_COMPANY', resCompany);
+      }
 
       this.companyId = resCompany._embedded.items[0].id;
       const contact = new crm.Contact(this.contactOptions);
       const resContact = await contact.save();
       this.contactId = resContact.id;
+      if (!this.contactId) this.constructor.throwError('NO_CONTACT', resContact);
+
       await crm.request.post('/api/v2/notes', this.notesOptions);
       const lead = new crm.Lead(this.leadOptions);
       await lead.save();
     } catch (err) {
-      err.message = `AMO: ${err.message}`;
-      throw err;
+      const error = new Error(`AMO_${err.message}`);
+      error.response = err.response;
+      throw error;
     } finally {
       crm.disconnect();
     }

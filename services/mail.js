@@ -25,7 +25,7 @@ exports.sendErrorMail = async error => {
   const mailOptions = {
     ...mailOptionsDefault,
     subject: `🛑 ERROR [${formatDate('DD.MM.YY HH:mm:ss')}]: ${error.message.slice(0, 30)}`,
-    html: `<pre>${error.stack}</pre>`
+    html: `<pre>${error.stack}</pre><pre>${JSON.stringify(error, null, 2)}</pre>`
   };
 
   try {
@@ -35,14 +35,13 @@ exports.sendErrorMail = async error => {
   }
 };
 
-exports.sendReportMail = async ({ date, content }) => {
+exports.sendReportMail = async ({ subject, path }) => {
   const mailOptions = {
     ...mailOptionsDefault,
     to: `${process.env.SUPPORT_EMAIL},${process.env.CLIENT_EMAIL}`,
-    subject: `🛑 Отчет за ${formatDate('DD.MM.YY', date)}`,
+    subject,
     attachments: {
-      filename: `report-${formatDate('YYYY-MM-DD', date)}.csv`,
-      content
+      path
     }
   };
 

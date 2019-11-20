@@ -18,9 +18,11 @@ const parseCapital = value => {
 };
 
 const parseManager = value => getStr(value.match(/(^.+?)(?: -)/));
+const parseDateRegistration = value => value.substr(13, 10);
 
-module.exports = ({ contacts, dataAuthorizedCapital, persons }) => ({
-  ...parseContacts(contacts),
-  capital: parseCapital(dataAuthorizedCapital),
-  manager: parseManager(persons)
+module.exports = organization => ({
+  ...parseContacts(organization.contacts),
+  capital: parseCapital(organization.dataAuthorizedCapital),
+  manager: parseManager(organization.persons),
+  dateRegistration: parseDateRegistration(organization.dateRegistration)
 });

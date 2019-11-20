@@ -7,7 +7,7 @@ const grabber = require('./grabber');
 const Proxy = require('./proxy');
 const { sendErrorMail } = require('./mail');
 const AmoCRM = require('./amoCRM');
-const checkStatusOrganization = require('./checkStatusOrganization');
+const checkStatus = require('../organization/checkStatus');
 
 const MIN_BALANCE = 1;
 
@@ -20,7 +20,7 @@ const sendContacts = async () => {
 
   // eslint-disable-next-line no-restricted-syntax
   for (const organization of organizations) {
-    const status = checkStatusOrganization(organization) ? 'send' : 'unsuitable';
+    const status = checkStatus(organization) ? 'send' : 'unsuitable';
     if (status === 'send') await amoCRM.send(organization);
     await db.setStatusOrganization({ id: organization.id, status });
   }
@@ -33,6 +33,7 @@ const sendContacts = async () => {
 
   for (let prevError = new Error(''); ;) {
     try {
+      await delay(3000);
       if ((await getCaptchaBalance()) < MIN_BALANCE) throw new Error('CAPTCHA_NO_BALANCE');
       const server = await proxy.get();
       const code = nextCode((await db.getLastCode()) || '43311880');
@@ -46,9 +47,10 @@ const sendContacts = async () => {
       if (errMessage === 'INVALID_PROXY') {
         await proxy.setError();
         console.error(errMessage);
+      } else if (errMessage === 'ERROR_CAPTCHA_UNSOLVABLE') {
+        console.error(err.message);
       } else {
         console.error(err);
-        console.error(err.message);
         if (errMessage !== prevError.message) await sendErrorMail(err);
         if (errMessage === 'STRUCTURE_ERROR') return;
         prevError = err;

@@ -13,7 +13,8 @@ const netErrors = [
   'net::ERR_TUNNEL_CONNECTION_FAILED',
   'net::ERR_EMPTY_RESPONSE',
   'net::ERR_CONNECTION_RESET',
-  'net::ERR_SSL_PROTOCOL_ERROR'
+  'net::ERR_SSL_PROTOCOL_ERROR',
+  'net::ERR_CERT_COMMON_NAME_INVALID'
 ];
 
 // -------------------------------------------------

@@ -30,3 +30,18 @@ exports.subtractDays = (amount = 0, datePar) => {
   date.setDate(date.getDate() - amount);
   return date;
 };
+
+
+exports.getDateObj = ({ year, month, day }) => {
+  const currentDate = new Date();
+  return {
+    year: year || currentDate.getFullYear(),
+    month: month >= 1 && month <= 12 ? +month : currentDate.getMonth() + 1,
+    day: +day || currentDate.getDay()
+  };
+};
+
+
+exports.monthToStr = month => zeroStart(month);
+
+exports.dayToStr = day => zeroStart(day);
