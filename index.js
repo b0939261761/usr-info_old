@@ -4,5 +4,5 @@ if (process.env.NODE_ENV !== 'production') dotenv.config();
 
 require('./init');
 require('./server');
-// require('./services/scheduler');
+require('./scheduler');
 // require('./services/runGrabber');
