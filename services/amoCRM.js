@@ -80,9 +80,14 @@ module.exports = class {
       `ЄДРПОУ: ${this.organization.code}`,
       `Адреса: ${this.organization.address}`,
       this.organization.activity,
-      `Капітал: ${this.organization.capital}`,
-      `Дата реєстрації: ${this.organization.dateRegistration}`
+      `Капітал: ${this.organization.capital}`
     ];
+
+    const { dateRegistration } = this.organization;
+
+    if (dateRegistration) {
+      notes.push(`Дата реєстрації: ${formatDate('DD.MM.YYYY', dateRegistration)}`);
+    }
 
     return { add: notes.map(this.getNoteOptions.bind(this)) };
   }
@@ -140,9 +145,8 @@ module.exports = class {
       const lead = new crm.Lead(this.leadOptions);
       await lead.save();
     } catch (err) {
-      const error = new Error(`AMO_${err.message}`);
-      error.response = err.response;
-      throw error;
+      err.message = `AMO_${err.message}`;
+      throw err;
     } finally {
       crm.disconnect();
     }

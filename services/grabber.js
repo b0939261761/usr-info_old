@@ -38,7 +38,8 @@ const getCaptcha = async key => {
 // -----------------------------------
 
 const getTableValues = el => {
-  const replaceTo = (char, row) => row.cells[1].innerHTML.replace(/(<br>)|(<hr>)|(\n&nbsp;\n)/g, char);
+  const replaceTo = (char, row) => row.cells[1].innerHTML
+    .replace(/(<br>&nbsp;<br>)|(<br>)|(<hr>)/g, char);
   const replaceToNewLine = replaceTo.bind(null, '\n');
   const replaceToTrim = replaceTo.bind(null, '');
   const rowCount = el.querySelectorAll('tr').length;
@@ -53,7 +54,7 @@ const getTableValues = el => {
       dataAuthorizedCapital: replaceToNewLine(el.rows[8]),
       activities: replaceToNewLine(el.rows[9]),
       persons: replaceToNewLine(el.rows[11]),
-      dateAndRecordNumber: replaceToNewLine(el.rows[12]),
+      dateAndRecordNumber: replaceToNewLine(el.rows[12]) || replaceToNewLine(el.rows[13]),
       activity: replaceToNewLine(el.rows[27]),
       contacts: replaceToNewLine(el.rows[31])
     };
@@ -64,7 +65,7 @@ const getTableValues = el => {
       name: replaceToNewLine(el.rows[2]),
       address: replaceToNewLine(el.rows[4]),
       persons: replaceToNewLine(el.rows[6]),
-      dateAndRecordNumber: replaceToNewLine(el.rows[7]),
+      dateAndRecordNumber: replaceToNewLine(el.rows[7]) || replaceToNewLine(el.rows[8]),
       activity: replaceToNewLine(el.rows[14])
     };
   }

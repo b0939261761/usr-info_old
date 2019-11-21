@@ -31,6 +31,15 @@ exports.subtractDays = (amount = 0, datePar) => {
   return date;
 };
 
+exports.dateToObj = datePar => {
+  const date = getDateTime(datePar);
+  return {
+    year: date.getFullYear(),
+    month: date.getMonth() + 1,
+    day: date.getDay()
+  };
+};
+
 
 exports.getDateObj = ({ year, month, day }) => {
   const currentDate = new Date();

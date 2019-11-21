@@ -9,9 +9,10 @@ const catchAsyncResponse = fn => async (...args) => {
   try {
     return await fn(...args);
   } catch (err) {
+    if (err.message.includes('CAPTCHA')) throw err;
     const error = new Error(`CAPTCHA_HTTP_${err.code}`);
-    error.config = err.config;
-    error.response = err.response;
+    if (err.config) error.config = err.config;
+    if (err.response) error.response = err.response;
     throw error;
   }
 };
@@ -20,10 +21,10 @@ const getRequest = ({ data }) => {
   const { status, request } = data;
   if (status) return request;
   if (request === 'CAPCHA_NOT_READY') return false;
-  const messageError = request.includes('CAPTCHA') ? request : `CAPTCHA: ${request}`;
+  const requestMessage = request.replace('CAPCHA', 'CAPTCHA');
+  const messageError = `${requestMessage.includes('CAPTCHA') ? '' : 'CAPTCHA_'}${requestMessage}`;
   throw new Error(messageError);
 };
-
 
 // --------- checkBalance --------
 

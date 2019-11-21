@@ -1,27 +1,23 @@
 const { job } = require('cron');
-const db = require('./db/db');
-// const organizationToCsv = require('../organization/organizationToCsv');
-const { sendReportMail } = require('./services/mail');
-const { subtractDays, formatDate } = require('./utils/date');
+const toSendFile = require('./organization/toSendFile');
+const { subtractDays, dateToObj } = require('./utils/date');
 const cleanFolder = require('./utils/cleanFolder');
+const { PATH_TMP } = require('./shared-data');
 
 // ---------------
 
 job('00 01 00 * * *', (async () => {
   try {
-    const date = subtractDays(1);
-    // const organizations = await db.getOrganizations({ date: formatDate('YYYY-MM-DD', date) });
-    // const content = organizationToCsv(organizations);
-    // await sendReportMail({ date, content });
+    await toSendFile(dateToObj(subtractDays(1)));
   } catch (err) {
     console.error(err);
   }
 }), null, true);
 
 
-job('00 21 00 * * *', (async () => {
+job('00 00 01 * * *', (async () => {
   try {
-    await cleanFolder();
+    await cleanFolder(PATH_TMP);
   } catch (err) {
     console.error(err);
   }

@@ -1,7 +1,9 @@
 /* eslint-disable no-await-in-loop */
+/* eslint-disable no-restricted-syntax */
+
 const { delay } = require('../utils/tools');
 const { nextCode } = require('../utils/code');
-const db = require('./db');
+const db = require('../db');
 const { getCaptchaBalance } = require('./captcha');
 const grabber = require('./grabber');
 const Proxy = require('./proxy');
@@ -18,7 +20,6 @@ const amoCRM = new AmoCRM();
 const sendContacts = async () => {
   const organizations = await db.getOrganizations({ status: 'none' });
 
-  // eslint-disable-next-line no-restricted-syntax
   for (const organization of organizations) {
     const status = checkStatus(organization) ? 'send' : 'unsuitable';
     if (status === 'send') await amoCRM.send(organization);
@@ -33,7 +34,6 @@ const sendContacts = async () => {
 
   for (let prevError = new Error(''); ;) {
     try {
-      await delay(3000);
       if ((await getCaptchaBalance()) < MIN_BALANCE) throw new Error('CAPTCHA_NO_BALANCE');
       const server = await proxy.get();
       const code = nextCode((await db.getLastCode()) || '43311880');

@@ -4,106 +4,64 @@ const parse = require('../organization/parse');
 
 //-----------------------------
 
-exports.getOrganizations = async (where = {}) => {
-  const createWhereFragment = ({
-    status, year, month, day
-  }) => {
-    if (year && month && day && status) {
-      return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}
-        AND EXTRACT(MONTH FROM "createdAt") = ${month}
-        AND EXTRACT(DAY FROM "createdAt") = ${day}
-        AND status = ${status}`;
-    }
+const whereFragmentGetOrganizations = ({
+  status, year, month, day
+} = {}) => {
+  if (year && month && day && status) {
+    return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}
+      AND EXTRACT(MONTH FROM "createdAt") = ${month}
+      AND EXTRACT(DAY FROM "createdAt") = ${day}
+      AND status = ${status}`;
+  }
 
-    if (year && month && status) {
-      return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}
-        AND EXTRACT(MONTH FROM "createdAt") = ${month}
-        AND status = ${status}`;
-    }
+  if (year && month && status) {
+    return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}
+      AND EXTRACT(MONTH FROM "createdAt") = ${month}
+      AND status = ${status}`;
+  }
 
-    if (year && status) {
-      return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}
-        AND status = ${status}`;
-    }
+  if (year && status) {
+    return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}
+      AND status = ${status}`;
+  }
 
-    if (status) {
-      return sql`status = ${status}`;
-    }
+  if (status) {
+    return sql`WHERE status = ${status}`;
+  }
 
-    if (year && month && day && status) {
-      return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}
-        AND EXTRACT(MONTH FROM "createdAt") = ${month}
-        AND EXTRACT(DAY FROM "createdAt") = ${day}`;
-    }
+  if (year && month && day) {
+    return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}
+      AND EXTRACT(MONTH FROM "createdAt") = ${month}
+      AND EXTRACT(DAY FROM "createdAt") = ${day}`;
+  }
 
-    if (year && month) {
-      return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}
-        AND EXTRACT(MONTH FROM "createdAt") = ${month}`;
-    }
+  if (year && month) {
+    return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}
+      AND EXTRACT(MONTH FROM "createdAt") = ${month}`;
+  }
 
-    if (year) {
-      return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}`;
-    }
+  if (year) {
+    return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}`;
+  }
 
-    return sql``;
-  };
-
-  return (await connection.query(sql`
-    SELECT * FROM "Organizations" ${createWhereFragment(where)} ORDER BY code;
-  `)).rows;
+  return sql``;
 };
+
+const sqlGetOrganizations = where => sql`
+  SELECT * FROM "Organizations" ${whereFragmentGetOrganizations(where)} ORDER BY code;
+`;
 
 //-----------------------------
 
-exports.getOrganizationsStream = (where = {}) => {
-  const createWhereFragment = ({
-    status, year, month, day
-  }) => {
-    if (year && month && day && status) {
-      return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}
-        AND EXTRACT(MONTH FROM "createdAt") = ${month}
-        AND EXTRACT(DAY FROM "createdAt") = ${day}
-        AND status = ${status}`;
-    }
+exports.getOrganizations = async options => (
+  await connection.query(sqlGetOrganizations(options))
+).rows;
 
-    if (year && month && status) {
-      return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}
-        AND EXTRACT(MONTH FROM "createdAt") = ${month}
-        AND status = ${status}`;
-    }
+//-----------------------------
 
-    if (year && status) {
-      return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}
-        AND status = ${status}`;
-    }
-
-    if (status) {
-      return sql`status = ${status}`;
-    }
-
-    if (year && month && day && status) {
-      return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}
-        AND EXTRACT(MONTH FROM "createdAt") = ${month}
-        AND EXTRACT(DAY FROM "createdAt") = ${day}`;
-    }
-
-    if (year && month) {
-      return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}
-        AND EXTRACT(MONTH FROM "createdAt") = ${month}`;
-    }
-
-    if (year) {
-      return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}`;
-    }
-
-    return sql``;
-  };
-
-  return new Promise(resolve => connection.stream(
-    sql`SELECT * FROM "Organizations" ${createWhereFragment(where)} ORDER BY code LIMIT 3`,
-    stream => resolve(stream)
-  ));
-};
+exports.getOrganizationsStream = options => new Promise(
+  resolve => connection.stream(sqlGetOrganizations(options), stream => resolve(stream))
+);
 
 //-----------------------------
 
@@ -123,13 +81,17 @@ const checkOrganization = organization => {
     code: organization.code || '',
     status: organization.status || 'none',
     fullName: organization.fullName || '',
-    legalForm: organization.code || '',
+    legalForm: organization.legalForm || '',
     name: organization.name || '',
     address: organization.address || '',
     founders: organization.founders || '',
     activity: organization.activity || '',
     activities: organization.activities || '',
     stayInformation: organization.stayInformation || '',
+    dataAuthorizedCapital,
+    persons,
+    dateAndRecordNumber,
+    contacts,
     ...parseField
   };
 };
@@ -138,7 +100,6 @@ const checkOrganization = organization => {
 
 exports.addOrganization = organization => {
   const org = checkOrganization(organization);
-
   connection.query(sql`
     INSERT INTO "Organizations" (status, code,
         manager, capital, phone1, phone2,
@@ -149,7 +110,7 @@ exports.addOrganization = organization => {
         "stayInformation")
       VALUES (${org.status}, ${org.code},
         ${org.manager}, ${org.capital}, ${org.phone1}, ${org.phone2},
-        ${org.email}, ${org.email}, ${org.dateRegistration}, ${org.fullName},
+        ${org.email}, ${org.dateRegistration}, ${org.fullName},
         ${org.legalForm}, ${org.name}, ${org.address}, ${org.founders},
         ${org.dataAuthorizedCapital}, ${org.activity}, ${org.activities},
         ${org.persons}, ${org.dateAndRecordNumber}, ${org.contacts},

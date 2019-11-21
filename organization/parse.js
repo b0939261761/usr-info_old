@@ -18,11 +18,15 @@ const parseCapital = value => {
 };
 
 const parseManager = value => getStr(value.match(/(^.+?)(?: -)/));
-const parseDateRegistration = value => value.substr(13, 10);
+
+const parseDateRegistration = value => {
+  const match = value.match(/(?<day>\d{2})\.(?<month>\d{2})\.(?<year>\d{4})/);
+  return match ? `${match.groups.year}-${match.groups.month}-${match.groups.day}` : null;
+};
 
 module.exports = organization => ({
   ...parseContacts(organization.contacts),
   capital: parseCapital(organization.dataAuthorizedCapital),
   manager: parseManager(organization.persons),
-  dateRegistration: parseDateRegistration(organization.dateRegistration)
+  dateRegistration: parseDateRegistration(organization.dateAndRecordNumber)
 });
