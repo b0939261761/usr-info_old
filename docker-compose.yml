@@ -7,7 +7,7 @@ services:
       cd /app
       && npm install --only=production
       && npm run db:migrate:production
-      && npm start"
+      && NODE_ENV=production node index.js"
     ports:
       - $SERVER_PORT:$SERVER_PORT
     volumes:

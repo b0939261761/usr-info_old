@@ -1,6 +1,4 @@
-/* eslint-disable no-await-in-loop */
-/* eslint-disable no-restricted-syntax */
-
+/* eslint-disable no-continue */
 const { delay } = require('../utils/tools');
 const { nextCode } = require('../utils/code');
 const db = require('../db');
@@ -10,6 +8,7 @@ const Proxy = require('./proxy');
 const { sendErrorMail } = require('./mail');
 const AmoCRM = require('./amoCRM');
 const checkStatus = require('../organization/checkStatus');
+const { formatDate, subtractDays } = require('../utils/date');
 
 const MIN_BALANCE = 1;
 
@@ -27,6 +26,25 @@ const sendContacts = async () => {
   }
 };
 
+const checkDateToWork = async dateRegistration => {
+  const currentDate = formatDate('YYYY-MM-DD');
+  const prevDate = formatDate('YYYY-MM-DD', subtractDays(1));
+  // Выходной день или дата регистрации = текущий день
+  // или (дата регистрации предыдущий день или предыдущий день выходной,
+  //      но час текущего дня меньше заданного
+  if (await db.existsHoliday(currentDate)
+    || dateRegistration >= currentDate
+    || ((dateRegistration === prevDate || await db.existsHoliday(prevDate))
+        && new Date().getHours() <= process.env.HOUR_START_GRABBER)
+  ) {
+    console.info('STOP GRABBER');
+    await delay(process.env.STOP_GRABBER_TIMEOUT * 1000);
+    return false;
+  }
+
+  return true;
+};
+
 // ------------------------
 
 (async () => {
@@ -34,9 +52,11 @@ const sendContacts = async () => {
 
   for (let prevError = new Error(''); ;) {
     try {
+      const lastOrganization = (await db.getLastOrganization()) || {};
+      if (!await checkDateToWork(lastOrganization.dateRegistration)) continue;
       if ((await getCaptchaBalance()) < MIN_BALANCE) throw new Error('CAPTCHA_NO_BALANCE');
       const server = await proxy.get();
-      const code = nextCode((await db.getLastCode()) || '43311880');
+      const code = nextCode(lastOrganization.code || '43311880');
       console.info(`Code: ${code}`);
       const organization = await grabber({ server, code });
       await proxy.resetError();

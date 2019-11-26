@@ -13,11 +13,11 @@ const cols = [
   'dateAndRecordNumber', 'contacts', 'stayInformation', 'createdAt', 'updatedAt'
 ];
 
-const formatDateAt = formatDate.bind(null, 'DD.MM.YY HH:mm:ss');
-
-const mapBody = (el, col) => (
-  ['createdAt', 'updatedAt'].includes(col) ? formatDateAt(el[col]) : trimSymbol(el[col])
-);
+const mapBody = (el, col) => {
+  if (['createdAt', 'updatedAt'].includes(col)) return formatDate('DD.MM.YYYY HH:mm:ss', el[col]);
+  if (col === 'dateRegistration') return formatDate('DD.MM.YYYY', el[col]);
+  return trimSymbol(el[col]);
+};
 
 const rowToCsv = el => `${cols.map(col => mapBody(el, col)).join(DELIMITER_CSV)}\n`;
 

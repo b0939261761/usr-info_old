@@ -48,15 +48,10 @@ exports.setLastActiveProxy = id => connection.query(sql`
 
 //-----------------------------
 
-exports.addProxies = async servers => connection.query(sql`
+exports.addProxies = servers => connection.query(sql`
   INSERT INTO "Proxies" (server)
-    SELECT * FROM
+    SELECT server FROM
       ${sql.unnest([...servers.map(el => [el])], ['text'])}
+      AS tmp(server)
     ON CONFLICT (server) DO NOTHING;
 `);
-
-//-----------------------------
-
-exports.getLastCode = async () => (await connection.one(sql`
-  SELECT COALESCE(MAX(code), '') AS code FROM "Organizations";
-`)).code;

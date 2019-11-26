@@ -2,7 +2,7 @@ const { promises: fs } = require('fs');
 const { getOrganizationsStream } = require('../db');
 const { getDateObj, monthToStr, dayToStr } = require('../utils/date');
 
-const toCreateFile = require('./toCreateFile');
+const toStream = require('./toStream');
 const { sendReportMail } = require('../services/mail');
 
 module.exports = async resDate => {
@@ -16,8 +16,9 @@ module.exports = async resDate => {
 
   const fileName = `usrinfo-${year}-${monthStr}${day ? `-${dayStr}` : ''}`;
   const subject = `📜 Отчет за ${day ? `${dayStr}.` : ''}${monthStr}.${year}`;
-
-  const path = await toCreateFile(fileName, streamDb);
-  await sendReportMail({ path, subject });
-  await fs.unlink(path);
+  const attachments = {
+    filename: `${fileName}.zip`,
+    content: toStream(fileName, streamDb)
+  };
+  await sendReportMail({ subject, attachments });
 };

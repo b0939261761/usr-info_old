@@ -25,9 +25,21 @@ exports.formatDate = (format, datePar) => {
   return result;
 };
 
+exports.addDays = (amount = 0, datePar) => {
+  const date = getDateTime(datePar);
+  date.setDate(date.getDate() + amount);
+  return date;
+};
+
 exports.subtractDays = (amount = 0, datePar) => {
   const date = getDateTime(datePar);
   date.setDate(date.getDate() - amount);
+  return date;
+};
+
+exports.addHours = (amount = 0, datePar) => {
+  const date = getDateTime(datePar);
+  date.setHours(date.getHours() + amount);
   return date;
 };
 
@@ -36,10 +48,9 @@ exports.dateToObj = datePar => {
   return {
     year: date.getFullYear(),
     month: date.getMonth() + 1,
-    day: date.getDay()
+    day: date.getDate()
   };
 };
-
 
 exports.getDateObj = ({ year, month, day }) => {
   const currentDate = new Date();

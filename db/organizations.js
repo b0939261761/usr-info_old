@@ -4,6 +4,12 @@ const parse = require('../organization/parse');
 
 //-----------------------------
 
+exports.getLastOrganization = () => connection.maybeOne(sql`
+  SELECT code, "dateRegistration" FROM "Organizations" ORDER BY id DESC LIMIT 1;
+`);
+
+//-----------------------------
+
 const whereFragmentGetOrganizations = ({
   status, year, month, day
 } = {}) => {

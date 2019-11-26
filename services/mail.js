@@ -35,14 +35,12 @@ exports.sendErrorMail = async error => {
   }
 };
 
-exports.sendReportMail = async ({ subject, path }) => {
+exports.sendReportMail = async ({ subject, attachments }) => {
   const mailOptions = {
     ...mailOptionsDefault,
     to: `${process.env.SUPPORT_EMAIL},${process.env.CLIENT_EMAIL}`,
     subject,
-    attachments: {
-      path
-    }
+    attachments
   };
 
   try {

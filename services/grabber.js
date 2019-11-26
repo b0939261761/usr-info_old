@@ -1,5 +1,3 @@
-/* eslint-disable no-await-in-loop */
-
 const puppeteer = require('puppeteer');
 const { delay } = require('../utils/tools');
 const { setCaptchaToken, getCaptchaToken } = require('./captcha');

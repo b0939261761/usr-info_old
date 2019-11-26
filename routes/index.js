@@ -5,5 +5,6 @@ routes.use('/proxies', require('./proxies'));
 routes.use('/organizations', require('./organizations'));
 routes.use('/balance', require('./balance'));
 routes.use('/generateCode', require('./generateCode'));
+routes.use('/holidays', require('./holidays'));
 
 module.exports = routes;

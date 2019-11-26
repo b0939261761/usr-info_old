@@ -2,17 +2,20 @@ const routes = require('express').Router();
 const Busboy = require('busboy');
 const readline = require('readline');
 const { catchAsyncRoute } = require('../utils/tools');
-const { getProxies, addProxies, getAmountProxy } = require('../db');
+const { formatDate } = require('../utils/date');
+const { getHolidays, addHolidays } = require('../db');
 
-
-routes.get('', catchAsyncRoute(async (req, res) => res.json(await getProxies())));
+routes.get('', catchAsyncRoute(async (req, res) => res.json(
+  await getHolidays(req.query.date || formatDate('YYYY-MM-DD'))
+)));
 
 routes.post('', catchAsyncRoute(async (req, res, next) => {
-  const patternServer = new RegExp(
-    '(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}'
-  + '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))'
-  + ':([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}'
-  + '|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])',
+  const patternDate = new RegExp(
+    '(((0[1-9]|[12]\\d|3[01])\\.(0[13578]|1[02])\\.((19|[2-9]\\d)\\d{2}))'
+    + '|((0[1-9]|[12]\\d|30)\\.(0[13456789]|1[012])\\.((19|[2-9]\\d)\\d{2}))'
+    + '|((0[1-9]|1\\d|2[0-8])\\.02\\.((19|[2-9]\\d)\\d{2}))'
+    + '|(29\\.02\\.((1[6-9]|[2-9]\\d)'
+    + '(0[48]|[2468][048]|[13579][26])|((16|[2468][048]|[3579][26])00))))',
     'g'
   );
 
@@ -33,15 +36,20 @@ routes.post('', catchAsyncRoute(async (req, res, next) => {
       const rl = readline.createInterface({ input: file, crlfDelay: Infinity });
 
       for await (const line of rl) {
-        const servers = line.match(patternServer);
-        if (servers) servers.forEach(el => { buffer.push([el]); });
+        const dates = line.match(patternDate);
+        if (dates) {
+          dates.forEach(
+            el => buffer.push([el.replace(/(\d{2})\.(\d{2})\.(\d{4})/, '$3-$2-$1')])
+          );
+        }
+
         if (buffer.length === 500) {
-          await addProxies(buffer);
+          await addHolidays(buffer);
           buffer.length = 0;
         }
       }
 
-      if (buffer.length) await addProxies(buffer);
+      if (buffer.length) await addHolidays(buffer);
     } catch (err) {
       errors.push(err);
     }
@@ -49,7 +57,7 @@ routes.post('', catchAsyncRoute(async (req, res, next) => {
     fieldNames.splice(fieldNames.indexOf(fieldName), 1);
     if (!fieldNames.length) {
       if (errors.length) return next(errors.length === 1 ? errors[0] : errors);
-      return res.redirect('proxies/amount');
+      return res.redirect('holidays');
     }
 
     return null;
@@ -60,8 +68,5 @@ routes.post('', catchAsyncRoute(async (req, res, next) => {
   busboy.on('finish', () => !fieldNames.length && next(new Error('NO_FILES')));
   return req.pipe(busboy);
 }));
-
-
-routes.get('/amount', catchAsyncRoute(async (req, res) => res.json(await getAmountProxy())));
 
 module.exports = routes;
