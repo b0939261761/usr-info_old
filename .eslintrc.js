@@ -34,6 +34,13 @@ module.exports = {
 
     'no-await-in-loop': 'off',
 
+    'object-curly-newline': ['error', {
+      ObjectExpression: { minProperties: 8, multiline: true, consistent: true },
+      ObjectPattern: { minProperties: 8, multiline: true, consistent: true },
+      ImportDeclaration: { minProperties: 8, multiline: true, consistent: true },
+      ExportDeclaration: { minProperties: 8, multiline: true, consistent: true },
+    }],
+
     'no-restricted-syntax': [
       'error',
       {

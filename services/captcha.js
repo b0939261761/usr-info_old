@@ -18,7 +18,7 @@ const catchAsyncResponse = fn => async (...args) => {
 };
 
 const getRequest = ({ data }) => {
-  const { status, request } = data;
+  const { status, request } = typeof data === 'object' ? data : { request: data };
   if (status) return request;
   if (request === 'CAPCHA_NOT_READY') return false;
   const requestMessage = request.replace('CAPCHA', 'CAPTCHA');

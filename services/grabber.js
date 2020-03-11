@@ -12,7 +12,8 @@ const netErrors = [
   'net::ERR_EMPTY_RESPONSE',
   'net::ERR_CONNECTION_RESET',
   'net::ERR_SSL_PROTOCOL_ERROR',
-  'net::ERR_CERT_COMMON_NAME_INVALID'
+  'net::ERR_CERT_COMMON_NAME_INVALID',
+  'net::ERR_CONNECTION_CLOSED'
 ];
 
 // -------------------------------------------------
@@ -111,7 +112,7 @@ module.exports = async ({ server, code }) => {
       if (await elem.$eval('p', el => el.textContent.includes('знайдено'))) {
         return { code };
       }
-      throw new Error('INVALID_PROXY');
+      throw new Error('INVALID_PROXY_TRY_LATER');
     } else {
       // Собираем основные данные
       const stayInformation = await elem.evaluate(el => el.rows[1].cells[3].textContent);
@@ -121,8 +122,10 @@ module.exports = async ({ server, code }) => {
       return { code, stayInformation, ...tableValues };
     }
   } catch (err) {
-    if (err instanceof puppeteer.errors.TimeoutError
-      || netErrors.some(el => err.message.startsWith(el))) throw new Error('INVALID_PROXY');
+    if (err instanceof puppeteer.errors.TimeoutError) throw new Error('INVALID_PROXY_TIMEOUT');
+
+    const netError = netErrors.find(el => err.message.startsWith(el));
+    if (netError) throw new Error(`INVALID_PROXY_${netError}`);
 
     throw err;
   } finally {

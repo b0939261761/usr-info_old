@@ -8,7 +8,7 @@ const trimSymbol = str => (typeof str === 'string' ? str.replace(patternRemoveDe
 
 const cols = [
   'index', 'id', 'status', 'code', 'fullName', 'legalForm', 'name',
-  'manager', 'capital', 'phone1', 'phone2', 'email', 'dateRegistration',
+  'manager', 'capital', 'phone1', 'phone2', 'email1', 'email2', 'dateRegistration',
   'address', 'founders', 'dataAuthorizedCapital', 'activity', 'activities', 'persons',
   'dateAndRecordNumber', 'contacts', 'stayInformation', 'createdAt', 'updatedAt'
 ];
@@ -26,7 +26,7 @@ exports.rowToCsv = organization => rowToCsv(organization);
 exports.header = `${[
   '#', 'ID', 'Статус запису', 'Код', 'Повне найменування',
   'Організаційно-правова форма', 'Назва', 'Керівник', 'Капітал',
-  'Телефон 1', 'Телефон 2', 'Електронна пошта', 'Дата реєстрації',
+  'Телефон 1', 'Телефон 2', 'Електронна пошта 1', 'Електронна пошта 2', 'Дата реєстрації',
   'Місце знаходження', 'Засновники', 'Дані про розмір статутного капіталу',
   'Вид діяльності', 'Види діяльності', 'Управління',
   'Дата та номер запису в реєстрі', 'Контакти',

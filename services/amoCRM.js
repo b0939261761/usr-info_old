@@ -5,6 +5,10 @@ const { formatDate } = require('../utils/date');
 // ---------------------------------------
 
 module.exports = class {
+  constructor() {
+    this.responsibleUsers = this.getResponsibleUsers;
+  }
+
   crmOptions = {
     domain: process.env.AMOCRM_DOMAIN,
     auth: {
@@ -12,6 +16,18 @@ module.exports = class {
       hash: process.env.AMOCRM_HASH
     }
   }
+
+  // -------------------------------
+
+  getResponsibleUsers() {
+    return Object.keys(process.env)
+      .filter(el => el.startsWith('AMOCRM_RESPONSIBLE_USER_ID'))
+      .sort()
+      .map(el => process.env[el]);
+  }
+  // -------------------------------
+
+  responsibleUserIndex = 0
 
   // -------------------------------
 
@@ -53,7 +69,7 @@ module.exports = class {
       {
         id: 212715,
         values: [{
-          value: this.organization.email,
+          value: this.organization.email1,
           enum: 'WORK'
         }]
       }]
@@ -109,15 +125,17 @@ module.exports = class {
   // -------------------------------
 
   getResponsibleUserId() {
-    return this.responsibleUserId === process.env.AMOCRM_RESPONSIBLE_USER_ID1
-      ? process.env.AMOCRM_RESPONSIBLE_USER_ID2
-      : process.env.AMOCRM_RESPONSIBLE_USER_ID1;
+    ++this.responsibleUserIndex;
+    if (this.responsibleUserIndex === this.responsibleUsers.length) this.responsibleUserIndex = 0;
+
+    return this.responsibleUsers[this.responsibleUserIndex];
   }
 
   // -------------------------------
-  static throwError(message, response) {
+  static throwError(message, request, response) {
     const error = new Error(message);
-    error.response = response;
+    error.request = JSON.stringify(request, null, 2);
+    error.response = JSON.stringify(response, null, 2);
     throw error;
   }
   // -------------------------------
@@ -131,15 +149,17 @@ module.exports = class {
     try {
       await crm.connect();
       const resCompany = await crm.request.post('/api/v2/companies', this.companyOptions);
-      if (!resCompany._embedded || !resCompany._embedded.items) {
-        this.constructor.throwError('NO_COMPANY', resCompany);
+
+      if (!resCompany._embedded || !resCompany._embedded.items
+        || !resCompany._embedded.items[0] || !resCompany._embedded.items[0].id) {
+        this.constructor.throwError('NO_COMPANY', this.companyOptions, resCompany);
       }
 
       this.companyId = resCompany._embedded.items[0].id;
       const contact = new crm.Contact(this.contactOptions);
       const resContact = await contact.save();
       this.contactId = resContact.id;
-      if (!this.contactId) this.constructor.throwError('NO_CONTACT', resContact);
+      if (!this.contactId) this.constructor.throwError('NO_CONTACT', this.contactOptions, resContact);
 
       await crm.request.post('/api/v2/notes', this.notesOptions);
       const lead = new crm.Lead(this.leadOptions);

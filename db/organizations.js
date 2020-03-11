@@ -104,19 +104,19 @@ const checkOrganization = organization => {
 
 //-----------------------------
 
-exports.addOrganization = organization => {
+exports.addOrganization = async organization => {
   const org = checkOrganization(organization);
-  connection.query(sql`
+  const result = await connection.one(sql`
     INSERT INTO "Organizations" (status, code,
         manager, capital, phone1, phone2,
-        email, "dateRegistration", "fullName",
+        email1, email2, "dateRegistration", "fullName",
         "legalForm", name, address, founders,
         "dataAuthorizedCapital", activity, activities,
         persons, "dateAndRecordNumber", contacts,
         "stayInformation")
       VALUES (${org.status}, ${org.code},
         ${org.manager}, ${org.capital}, ${org.phone1}, ${org.phone2},
-        ${org.email}, ${org.dateRegistration}, ${org.fullName},
+        ${org.email1}, ${org.email2}, ${org.dateRegistration}, ${org.fullName},
         ${org.legalForm}, ${org.name}, ${org.address}, ${org.founders},
         ${org.dataAuthorizedCapital}, ${org.activity}, ${org.activities},
         ${org.persons}, ${org.dateAndRecordNumber}, ${org.contacts},
@@ -127,7 +127,8 @@ exports.addOrganization = organization => {
         capital = EXCLUDED.capital,
         phone1 = EXCLUDED.phone1,
         phone2 = EXCLUDED.phone2,
-        email = EXCLUDED.email,
+        email1 = EXCLUDED.email1,
+        email2 = EXCLUDED.email2,
         "dateRegistration" = EXCLUDED."dateRegistration",
         "fullName" = EXCLUDED."fullName",
         "legalForm" = EXCLUDED."legalForm",
@@ -140,8 +141,10 @@ exports.addOrganization = organization => {
         persons = EXCLUDED.persons,
         "dateAndRecordNumber" = EXCLUDED."dateAndRecordNumber",
         contacts = EXCLUDED.contacts,
-        "stayInformation" = EXCLUDED."stayInformation";
+        "stayInformation" = EXCLUDED."stayInformation"
+      RETURNING *;
   `);
+  return result;
 };
 
 //-----------------------------
@@ -163,7 +166,8 @@ exports.setOrganization = organization => {
       capital = ${org.capital},
       phone1 = ${org.phone1},
       phone2 = ${org.phone2},
-      email = ${org.email},
+      email1 = ${org.email1},
+      email2 = ${org.email2},
       "dateRegistration" = ${org.dateRegistration}
       "fullName" = ${org.fullName},
       "legalForm" = ${org.legalForm},
@@ -180,3 +184,15 @@ exports.setOrganization = organization => {
     WHERE id = ${org.id};
   `);
 };
+
+//-----------------------------
+
+exports.checkingForDuplicateEmail = async email => (await connection.one(sql`
+  SELECT count(*) < 2 AS exists FROM "Organizations" WHERE email1 = ${email} OR email2 = ${email};
+`)).exists;
+
+//-----------------------------
+
+exports.checkingForDuplicatePhone = async phone => (await connection.one(sql`
+  SELECT count(*) < 2 AS exists FROM "Organizations" WHERE phone1 = ${phone} OR phone2 = ${phone};
+`)).exists;

@@ -31,7 +31,7 @@ exports.sendErrorMail = async error => {
   try {
     await sendMail(mailOptions);
   } catch (err) {
-    console.error(err);
+    console.error(formatDate('DD.MM.YY HH:mm:ss'), err);
   }
 };
 
@@ -46,6 +46,6 @@ exports.sendReportMail = async ({ subject, attachments }) => {
   try {
     await sendMail(mailOptions);
   } catch (err) {
-    console.error(err);
+    console.error(formatDate('DD.MM.YY HH:mm:ss'), err);
   }
 };

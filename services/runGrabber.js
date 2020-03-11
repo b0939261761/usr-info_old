@@ -4,8 +4,9 @@ const { nextCode } = require('../utils/code');
 const db = require('../db');
 const { getCaptchaBalance } = require('./captcha');
 const grabber = require('./grabber');
-const Proxy = require('./proxy');
+const ProxyList = require('./proxy');
 const { sendErrorMail } = require('./mail');
+const sendMarketing = require('./sendMarketing');
 const AmoCRM = require('./amoCRM');
 const checkStatus = require('../organization/checkStatus');
 const { formatDate, subtractDays } = require('../utils/date');
@@ -35,7 +36,7 @@ const checkDateToWork = async dateRegistration => {
   if (await db.existsHoliday(currentDate)
     || dateRegistration >= currentDate
     || ((dateRegistration === prevDate || await db.existsHoliday(prevDate))
-        && new Date().getHours() <= process.env.HOUR_START_GRABBER)
+        && new Date().getHours() < process.env.HOUR_START_GRABBER)
   ) {
     console.info('STOP GRABBER');
     await delay(process.env.STOP_GRABBER_TIMEOUT * 1000);
@@ -48,7 +49,7 @@ const checkDateToWork = async dateRegistration => {
 // ------------------------
 
 (async () => {
-  const proxy = new Proxy();
+  const proxy = new ProxyList();
 
   for (let prevError = new Error(''); ;) {
     try {
@@ -60,17 +61,20 @@ const checkDateToWork = async dateRegistration => {
       console.info(`Code: ${code}`);
       const organization = await grabber({ server, code });
       await proxy.resetError();
-      await db.addOrganization(organization);
+      const organizationDB = await db.addOrganization(organization);
+      await sendMarketing(organizationDB);
       await sendContacts();
     } catch (err) {
       const errMessage = err.message;
-      if (errMessage === 'INVALID_PROXY') {
+      const time = formatDate('YYYY-MM-DD HH:mm:ss');
+
+      if (errMessage.startsWith('INVALID_PROXY')) {
         await proxy.setError();
-        console.error(errMessage);
+        console.error(time, errMessage);
       } else if (errMessage === 'ERROR_CAPTCHA_UNSOLVABLE') {
-        console.error(err.message);
+        console.error(time, errMessage);
       } else {
-        console.error(err);
+        console.error(time, err);
         if (errMessage !== prevError.message) await sendErrorMail(err);
         if (errMessage === 'STRUCTURE_ERROR') return;
         prevError = err;
