@@ -13,7 +13,8 @@ const netErrors = [
   'net::ERR_CONNECTION_RESET',
   'net::ERR_SSL_PROTOCOL_ERROR',
   'net::ERR_CERT_COMMON_NAME_INVALID',
-  'net::ERR_CONNECTION_CLOSED'
+  'net::ERR_CONNECTION_CLOSED',
+  'net::ERR_SOCKET_NOT_CONNECTED'
 ];
 
 // -------------------------------------------------
