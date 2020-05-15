@@ -19,6 +19,5 @@ const query = sql`SELECT DISTINCT ON (email1) name, manager, email1, email2
   for (const { name: company, manager, email1, email2 } of rows) {
     await sendMail({ email: email1, company, manager });
     if (email2) await sendMail({ email: email2, company, manager });
-    console.log(email1);
   }
 })();

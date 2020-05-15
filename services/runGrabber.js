@@ -4,7 +4,7 @@ const { nextCode } = require('../utils/code');
 const db = require('../db');
 const { getCaptchaBalance } = require('./captcha');
 const grabber = require('./grabber');
-const ProxyList = require('./proxy');
+const ProxyItem = require('./proxyItem');
 const { sendErrorMail } = require('./mail');
 const sendMarketing = require('./sendMarketing');
 const AmoCRM = require('./amoCRM');
@@ -12,7 +12,6 @@ const checkStatus = require('../organization/checkStatus');
 const { formatDate, subtractDays } = require('../utils/date');
 
 const MIN_BALANCE = 1;
-
 const amoCRM = new AmoCRM();
 
 // ------------------------
@@ -49,18 +48,18 @@ const checkDateToWork = async dateRegistration => {
 // ------------------------
 
 (async () => {
-  const proxy = new ProxyList();
+  const proxyItem = new ProxyItem();
 
   for (let prevError = new Error(''); ;) {
     try {
       const lastOrganization = (await db.getLastOrganization()) || {};
       if (!await checkDateToWork(lastOrganization.dateRegistration)) continue;
       if ((await getCaptchaBalance()) < MIN_BALANCE) throw new Error('CAPTCHA_NO_BALANCE');
-      const server = await proxy.get();
+      const proxy = await proxyItem.get();
       const code = nextCode(lastOrganization.code || '43311880');
       console.info(`Code: ${code}`);
-      const organization = await grabber({ server, code });
-      await proxy.resetError();
+      const organization = await grabber({ proxy, code });
+      await proxyItem.resetError();
       const organizationDB = await db.addOrganization(organization);
       await sendMarketing(organizationDB);
       await sendContacts();
@@ -69,7 +68,7 @@ const checkDateToWork = async dateRegistration => {
       const time = formatDate('YYYY-MM-DD HH:mm:ss');
 
       if (errMessage.startsWith('INVALID_PROXY')) {
-        await proxy.setError();
+        await proxyItem.setError();
         console.error(time, errMessage);
       } else if (errMessage === 'ERROR_CAPTCHA_UNSOLVABLE') {
         console.error(time, errMessage);
@@ -81,7 +80,7 @@ const checkDateToWork = async dateRegistration => {
         await delay(process.env.ERROR_TIMEOUT * 1000);
       }
     } finally {
-      await proxy.setLastActive();
+      await proxyItem.setLastActive();
     }
   }
 })();

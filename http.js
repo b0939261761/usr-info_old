@@ -61,7 +61,7 @@ const myHttp = config => new Promise((resolve, reject) => {
 });
 
 
-const con = {
+const config = {
   baseUrl: 'http://rucaptcha.com/',
   url: 'res',
   path: `?action=getbalance&key=${process.env.RUCAPTCHA_KEY}`,
@@ -71,7 +71,7 @@ const con = {
 
 (async () => {
   try {
-    const res = await myHttp(con);
+    const res = await myHttp(config);
     console.log(res.data, typeof res.data);
   } catch (err) {
     console.log(err);

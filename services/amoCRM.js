@@ -125,12 +125,8 @@ module.exports = class {
   // -------------------------------
 
   getResponsibleUserId() {
-    console.log('responsibleUserIndex OLD', this.responsibleUserIndex)
-
     ++this.responsibleUserIndex;
     if (this.responsibleUserIndex === this.responsibleUsers.length) this.responsibleUserIndex = 0;
-
-    console.log('responsibleUserIndex NEW', this.responsibleUserIndex)
     return this.responsibleUsers[this.responsibleUserIndex];
   }
 
@@ -145,7 +141,6 @@ module.exports = class {
 
   async send(organization) {
     this.responsibleUserId = this.getResponsibleUserId();
-    console.log('responsibleUserId', this.responsibleUserId);
     this.organization = organization;
     this.fullName = organization.fullName.replace('ТОВАРИСТВО З ОБМЕЖЕНОЮ ВІДПОВІДАЛЬНІСТЮ', 'ТОВ');
 

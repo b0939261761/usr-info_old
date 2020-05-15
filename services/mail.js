@@ -21,11 +21,14 @@ const sendMail = mailOptions => {
   return transporter.sendMail(mailOptions);
 };
 
+// Axios скидыдвает ошибку Converting circular structure to JSON, поэтому делаем костыль
+const replacerJSON = (key, value) => (key[0] === '_' || key === 'res' ? undefined : value);
+
 exports.sendErrorMail = async error => {
   const mailOptions = {
     ...mailOptionsDefault,
     subject: `🛑 ERROR [${formatDate('DD.MM.YY HH:mm:ss')}]: ${error.message.slice(0, 30)}`,
-    html: `<pre>${error.stack}</pre><pre>${JSON.stringify(error, null, 2)}</pre>`
+    html: `<pre>${error.stack}</pre><pre>${JSON.stringify(error, replacerJSON, 2)}</pre>`
   };
 
   try {

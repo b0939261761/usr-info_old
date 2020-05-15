@@ -10,17 +10,16 @@ routes.get('', catchAsyncRoute(async (req, res) => res.json(await getProxies()))
 routes.post('', catchAsyncRoute(async (req, res, next) => {
   const patternServer = new RegExp(
     '(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}'
-  + '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))'
-  + ':([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}'
-  + '|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])',
-    'g'
+    + '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))'
+    + ':([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}'
+    + '|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])'
   );
 
   const fieldNames = [];
   const errors = [];
 
   const busboyOnFile = async (fieldName, file, fileName, encoding, mimeType) => {
-    if (mimeType !== 'text/plain') {
+    if (mimeType !== 'text/csv') {
       const error = new Error('INVALID_TYPE_FILE');
       error.fieldName = fieldName;
       error.fileName = fileName;
@@ -33,8 +32,14 @@ routes.post('', catchAsyncRoute(async (req, res, next) => {
       const rl = readline.createInterface({ input: file, crlfDelay: Infinity });
 
       for await (const line of rl) {
-        const servers = line.match(patternServer);
-        if (servers) servers.forEach(el => { buffer.push([el]); });
+        const values = line.split(';');
+
+        const server = values[0] || '';
+        const protocol = values[1] || '';
+        const username = values[2] || '';
+        const password = values[3] || '';
+
+        if (patternServer.test(server)) buffer.push({ server, protocol, username, password });
         if (buffer.length === 500) {
           await addProxies(buffer);
           buffer.length = 0;

@@ -14,20 +14,20 @@ const whereFragmentGetOrganizations = ({
   status, year, month, day
 } = {}) => {
   if (year && month && day && status) {
-    return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}
-      AND EXTRACT(MONTH FROM "createdAt") = ${month}
-      AND EXTRACT(DAY FROM "createdAt") = ${day}
+    return sql`WHERE EXTRACT(YEAR FROM "dateRegistration") = ${year}
+      AND EXTRACT(MONTH FROM "dateRegistration") = ${month}
+      AND EXTRACT(DAY FROM "dateRegistration") = ${day}
       AND status = ${status}`;
   }
 
   if (year && month && status) {
-    return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}
-      AND EXTRACT(MONTH FROM "createdAt") = ${month}
+    return sql`WHERE EXTRACT(YEAR FROM "dateRegistration") = ${year}
+      AND EXTRACT(MONTH FROM "dateRegistration") = ${month}
       AND status = ${status}`;
   }
 
   if (year && status) {
-    return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}
+    return sql`WHERE EXTRACT(YEAR FROM "dateRegistration") = ${year}
       AND status = ${status}`;
   }
 
@@ -36,18 +36,18 @@ const whereFragmentGetOrganizations = ({
   }
 
   if (year && month && day) {
-    return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}
-      AND EXTRACT(MONTH FROM "createdAt") = ${month}
-      AND EXTRACT(DAY FROM "createdAt") = ${day}`;
+    return sql`WHERE EXTRACT(YEAR FROM "dateRegistration") = ${year}
+      AND EXTRACT(MONTH FROM "dateRegistration") = ${month}
+      AND EXTRACT(DAY FROM "dateRegistration") = ${day}`;
   }
 
   if (year && month) {
-    return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}
-      AND EXTRACT(MONTH FROM "createdAt") = ${month}`;
+    return sql`WHERE EXTRACT(YEAR FROM "dateRegistration") = ${year}
+      AND EXTRACT(MONTH FROM "dateRegistration") = ${month}`;
   }
 
   if (year) {
-    return sql`WHERE EXTRACT(YEAR FROM "createdAt") = ${year}`;
+    return sql`WHERE EXTRACT(YEAR FROM "dateRegistration") = ${year}`;
   }
 
   return sql``;

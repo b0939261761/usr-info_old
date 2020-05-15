@@ -10,7 +10,9 @@ const catchAsyncResponse = fn => async (...args) => {
     return await fn(...args);
   } catch (err) {
     if (err.message.includes('CAPTCHA')) throw err;
-    const error = new Error(`CAPTCHA_HTTP_${err.code}`);
+    const code = err.code || (err.response && err.response.status) || '';
+    const error = new Error(`CAPTCHA_HTTP_${code}`);
+    error.code = code;
     if (err.config) error.config = err.config;
     if (err.response) error.response = err.response;
     throw error;
@@ -35,6 +37,7 @@ exports.getCaptchaBalance = catchAsyncResponse(async () => getRequest(
 exports.setCaptchaToken = catchAsyncResponse(async key => getRequest(
   await http.get('in.php', {
     params: {
+      key: process.env.RUCAPTCHA_KEY,
       method: 'userrecaptcha',
       googlekey: key,
       pageurl: process.env.SITE_URL

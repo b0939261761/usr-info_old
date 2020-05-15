@@ -6,6 +6,7 @@ const { setCaptchaToken, getCaptchaToken } = require('./captcha');
 
 const netErrors = [
   'net::ERR_CERT_AUTHORITY_INVALID',
+  'net::ERR_INVALID_AUTH_CREDENTIALS',
   'net::ERR_TIMED_OUT',
   'net::ERR_PROXY_CONNECTION_FAILED',
   'net::ERR_TUNNEL_CONNECTION_FAILED',
@@ -75,10 +76,10 @@ const getTableValues = el => {
 
 // -----------------------------------
 
-module.exports = async ({ server, code }) => {
+module.exports = async ({ proxy, code }) => {
   const browser = await puppeteer.launch({
     args: [
-      `--proxy-server=${server}`,
+      `--proxy-server=${proxy.server}`,
       '--no-sandbox'
     ],
     headless: process.env.NODE_ENV === 'production'
@@ -88,6 +89,7 @@ module.exports = async ({ server, code }) => {
     const { 0: page } = await browser.pages();
     page.setDefaultTimeout(process.env.NAVIGATION_TIMEOUT * 1000);
     await page.setUserAgent(process.env.USER_AGENT);
+    if (proxy.authenticate) await page.authenticate(proxy.authenticate);
     await page.goto(`${process.env.SITE_URL}/edr.html`);
 
     // Выбор кода
@@ -101,7 +103,9 @@ module.exports = async ({ server, code }) => {
     const captchaKey = await page.$eval('.g-recaptcha', el => el.dataset.sitekey);
     const captchaToken = await getCaptcha(captchaKey);
     await reCaptchaResponse.evaluate((el, val) => { el.value = val; }, captchaToken);
-    await page.click('input[type=submit]');
+    await page.waitFor(1000);
+    await page.$eval('input[type=submit]', el => el.click());
+    // await page.click('input[type=submit]', { delay: 1000 });
 
     // Ответ от сервера
     const elem = await Promise.race([

@@ -6,7 +6,7 @@ const MAX_PROXY_ERRORS = 3;
 //-----------------------------
 
 exports.getProxy = () => connection.maybeOne(sql`
-  SELECT id, server, "lastActive" FROM "Proxies"
+  SELECT id, server, protocol, username, password, "lastActive" FROM "Proxies"
     WHERE "amountErrors" <= ${MAX_PROXY_ERRORS}
     ORDER BY "lastActive" NULLS FIRST, id
     LIMIT 1;
@@ -23,7 +23,7 @@ exports.getAmountProxy = () => connection.maybeOne(sql`
 //-----------------------------
 
 exports.getProxies = async () => (await connection.query(sql`
-  SELECT id, server, "amountErrors", "lastActive" FROM "Proxies"
+  SELECT id, server, protocol, username, password, "amountErrors", "lastActive" FROM "Proxies"
     WHERE "amountErrors" = 0
     ORDER BY "lastActive" NULLS FIRST, id
 `)).rows;
@@ -48,10 +48,19 @@ exports.setLastActiveProxy = id => connection.query(sql`
 
 //-----------------------------
 
-exports.addProxies = servers => connection.query(sql`
-  INSERT INTO "Proxies" (server)
-    SELECT server FROM
-      ${sql.unnest([...servers.map(el => [el])], ['text'])}
-      AS tmp(server)
-    ON CONFLICT (server) DO NOTHING;
-`);
+exports.addProxies = proxies => {
+  const values = sql.unnest(
+    [...proxies.map(el => [el.server, el.protocol, el.username, el.password])],
+    ['text', 'text', 'text', 'text']
+  );
+
+  return connection.query(sql`
+    INSERT INTO "Proxies" (server, protocol, username, password)
+      SELECT server, protocol, username, password FROM
+        ${values} AS tmp(server, protocol, username, password)
+      ON CONFLICT (server) DO UPDATE SET
+        protocol = EXCLUDED.protocol,
+        username = EXCLUDED.username,
+        password = EXCLUDED.password;
+  `);
+};
