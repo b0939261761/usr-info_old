@@ -19,12 +19,12 @@ routes.post('', catchAsyncRoute(async (req, res, next) => {
   const errors = [];
 
   const busboyOnFile = async (fieldName, file, fileName, encoding, mimeType) => {
-    if (mimeType !== 'text/csv') {
-      const error = new Error('INVALID_TYPE_FILE');
-      error.fieldName = fieldName;
-      error.fileName = fileName;
-      return next(error);
-    }
+    // if (mimeType !== 'text/csv') {
+    //   const error = new Error('INVALID_TYPE_FILE');
+    //   error.fieldName = fieldName;
+    //   error.fileName = fileName;
+    //   return next(error);
+    // }
 
     fieldNames.push(fieldName);
     try {
