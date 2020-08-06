@@ -12,7 +12,7 @@ module.exports = {
       status "${typeName}" NOT NULL DEFAULT 'none',
       code VARCHAR(8) NOT NULL DEFAULT '' UNIQUE,
       manager VARCHAR(254) NOT NULL DEFAULT '',
-      capital INTEGER NOT NULL DEFAULT 0,
+      capital bigint NOT NULL DEFAULT 0,
       phone1 VARCHAR(13) NOT NULL DEFAULT '',
       phone2 VARCHAR(13) NOT NULL DEFAULT '',
       email1 VARCHAR(254) NOT NULL DEFAULT '',
