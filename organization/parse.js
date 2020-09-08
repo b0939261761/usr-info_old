@@ -53,23 +53,26 @@ const getEmails = value => {
 
 const parseContacts = value => ({ ...getPhones(value), ...getEmails(value) });
 
-const getStr = value => ((value && value[1]) || '').slice(0, 254);
+const getStr = value => ((value && value[1]) || '').replace(/\s+/g, ' ').slice(0, 254);
 
 const parseCapital = value => {
   const capitalMatch = value.match(/(?:Розмір.*?)(\d+)/);
   return (capitalMatch && +capitalMatch[1]) || 0;
 };
 
-const parseManager = value => getStr(value.match(/(^.+?)(?: -)/));
+const parseManager = value => getStr(value.match(/(^.+?)(?: (-|\d))/)).toUpperCase();
 
 const parseDateRegistration = value => {
   const match = value.match(/(?<day>\d{2})\.(?<month>\d{2})\.(?<year>\d{4})/);
   return match ? `${match.groups.year}-${match.groups.month}-${match.groups.day}` : null;
 };
 
+const parseActivity = value => (value.substring(0, value.indexOf('\n')) || value).replace(/;$/, '');
+
 module.exports = organization => ({
   ...parseContacts(organization.contacts),
   capital: parseCapital(organization.dataAuthorizedCapital),
   manager: parseManager(organization.persons),
-  dateRegistration: parseDateRegistration(organization.dateAndRecordNumber)
+  dateRegistration: parseDateRegistration(organization.dateAndRecordNumber),
+  activity: parseActivity(organization.activities)
 });

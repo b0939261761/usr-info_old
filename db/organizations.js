@@ -76,11 +76,12 @@ const checkOrganization = organization => {
     dataAuthorizedCapital = '',
     persons = '',
     dateAndRecordNumber = '',
-    contacts = ''
+    contacts = '',
+    activities = ''
   } = organization;
 
   const parseField = parse({
-    contacts, dataAuthorizedCapital, persons, dateAndRecordNumber
+    contacts, dataAuthorizedCapital, persons, dateAndRecordNumber, activities
   });
 
   return {
@@ -91,13 +92,12 @@ const checkOrganization = organization => {
     name: organization.name || '',
     address: organization.address || '',
     founders: organization.founders || '',
-    activity: organization.activity || '',
-    activities: organization.activities || '',
     stayInformation: organization.stayInformation || '',
     dataAuthorizedCapital,
     persons,
     dateAndRecordNumber,
     contacts,
+    activities,
     ...parseField
   };
 };

@@ -42,6 +42,12 @@ exports.resetErrorProxy = id => connection.query(sql`
 
 //-----------------------------
 
+exports.resetErrorProxies = () => connection.query(sql`
+  UPDATE "Proxies" SET "amountErrors" = 0
+`);
+
+//-----------------------------
+
 exports.setLastActiveProxy = id => connection.query(sql`
   UPDATE "Proxies" SET "lastActive" = TO_TIMESTAMP(${Date.now() / 1000}) WHERE id = ${id};
 `);

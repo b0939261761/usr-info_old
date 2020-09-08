@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer');
 const { delay } = require('../utils/tools');
 const { setCaptchaToken, getCaptchaToken } = require('./captcha');
+const findCaptcha = require('./findCaptcha');
 
 // -----------------------------------
 
@@ -39,35 +40,33 @@ const getCaptcha = async key => {
 // -----------------------------------
 
 const getTableValues = el => {
-  const replaceTo = (char, row) => row.cells[1].innerHTML
+  const replaceTo = (char, row) => row.cells[1].textContent
     .replace(/(<br>&nbsp;<br>)|(<br>)|(<hr>)/g, char);
   const replaceToNewLine = replaceTo.bind(null, '\n');
   const replaceToTrim = replaceTo.bind(null, '');
   const rowCount = el.querySelectorAll('tr').length;
 
-  if (rowCount === 32) {
+  if (rowCount === 29) {
     return {
       fullName: replaceToTrim(el.rows[0]),
-      legalForm: replaceToNewLine(el.rows[2]),
-      name: replaceToNewLine(el.rows[3]),
-      address: replaceToNewLine(el.rows[6]),
+      legalForm: replaceToNewLine(el.rows[1]),
+      name: replaceToNewLine(el.rows[2]),
+      address: replaceToNewLine(el.rows[5]),
+      dataAuthorizedCapital: replaceToNewLine(el.rows[6]),
       founders: replaceToNewLine(el.rows[7]),
-      dataAuthorizedCapital: replaceToNewLine(el.rows[8]),
       activities: replaceToNewLine(el.rows[9]),
       persons: replaceToNewLine(el.rows[11]),
-      dateAndRecordNumber: replaceToNewLine(el.rows[12]) || replaceToNewLine(el.rows[13]),
-      activity: replaceToNewLine(el.rows[27]),
-      contacts: replaceToNewLine(el.rows[31])
+      dateAndRecordNumber: replaceToNewLine(el.rows[13]),
+      contacts: replaceToNewLine(el.rows[28])
     };
-  } if (rowCount === 18) {
+  } if (rowCount === 17) {
     return {
       fullName: replaceToTrim(el.rows[0]),
       legalForm: replaceToNewLine(el.rows[1]),
       name: replaceToNewLine(el.rows[2]),
       address: replaceToNewLine(el.rows[4]),
-      persons: replaceToNewLine(el.rows[6]),
-      dateAndRecordNumber: replaceToNewLine(el.rows[7]) || replaceToNewLine(el.rows[8]),
-      activity: replaceToNewLine(el.rows[14])
+      dateAndRecordNumber: replaceToNewLine(el.rows[6]),
+      persons: replaceToNewLine(el.rows[9])
     };
   }
 
@@ -90,42 +89,43 @@ module.exports = async ({ proxy, code }) => {
     page.setDefaultTimeout(process.env.NAVIGATION_TIMEOUT * 1000);
     await page.setUserAgent(process.env.USER_AGENT);
     if (proxy.authenticate) await page.authenticate(proxy.authenticate);
-    await page.goto(`${process.env.SITE_URL}/edr.html`);
+    await page.goto(process.env.SITE_URL);
 
     // Выбор кода
-    const yurcheck = await page.waitForSelector('#yurcheck');
-    await yurcheck.click();
-    await page.$eval('#query', (el, val) => { el.value = val; }, code);
-    await page.click('input[type=submit]');
+    const legalEntity = await page.waitForSelector('app-radio-buttons input[value="2"]');
+    await legalEntity.click();
+    await page.focus('app-input-field input:enabled');
+    await page.keyboard.type(code);
+    await page.click('button[type="submit"]');
 
     // Отправка captcha
-    const reCaptchaResponse = await page.waitForSelector('#g-recaptcha-response');
-    const captchaKey = await page.$eval('.g-recaptcha', el => el.dataset.sitekey);
+    const frame = await page.waitForSelector('re-captcha iframe');
+    const recatchaSrc = await frame.evaluate(el => el.src);
+    const captchaKey = new URL(recatchaSrc).searchParams.get('k');
     const captchaToken = await getCaptcha(captchaKey);
-    await reCaptchaResponse.evaluate((el, val) => { el.value = val; }, captchaToken);
+
+    await page.evaluate(({ captchaToken, findCaptchaText }) => {
+      eval(eval(findCaptchaText)()[0].callback)(captchaToken);
+    }, { captchaToken, findCaptchaText: `${findCaptcha}` });
+
     await page.waitFor(1000);
-    await page.$eval('input[type=submit]', el => el.click());
-    // await page.click('input[type=submit]', { delay: 1000 });
+    await page.click('recaptcha-wrapper button');
 
-    // Ответ от сервера
-    const elem = await Promise.race([
-      page.waitForSelector('#restable'),
-      page.waitForSelector('div.ui-state-error')
-    ]);
-
-    if ((await elem.evaluate(el => el.tagName)) === 'DIV') { // Ошибка
-      if (await elem.$eval('p', el => el.textContent.includes('знайдено'))) {
+    const searchResultTable = await page.waitForSelector('search-result-table');
+    const textError = await searchResultTable.$('.text-danger');
+    if (textError) {
+      if (await textError.evaluate(el => el.textContent.includes('знайдено'))) {
         return { code };
       }
       throw new Error('INVALID_PROXY_TRY_LATER');
-    } else {
-      // Собираем основные данные
-      const stayInformation = await elem.evaluate(el => el.rows[1].cells[3].textContent);
-      await page.click('form.detailinfo input[type=submit]');
-      const table = await page.waitForSelector('table#detailtable');
-      const tableValues = await table.evaluate(getTableValues);
-      return { code, stayInformation, ...tableValues };
     }
+
+    const tableRow = await page.waitForSelector('.table-wrapper tr');
+    const stayInformation = await tableRow.evaluate(el => el.cells[3].textContent);
+    await page.click('.table-wrapper button');
+    await page.waitForSelector('app-table .table-wrapper tr:nth-child(2)');
+    const tableValues = await page.$eval('.table-wrapper table', getTableValues);
+    return { code, stayInformation, ...tableValues };
   } catch (err) {
     if (err instanceof puppeteer.errors.TimeoutError) throw new Error('INVALID_PROXY_TIMEOUT');
 

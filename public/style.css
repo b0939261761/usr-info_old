@@ -27,7 +27,7 @@ html {
 body {
   height: 100%;
   margin: 0;
-  padding: 0;
+  padding-top: 3rem;
   overflow: hidden;
 }
 
@@ -101,7 +101,7 @@ body {
 /* -------------------- */
 
 .form {
-  margin: 3rem auto;
+  margin: 0 auto;
   width: 100%;
   max-width: 25rem;
 }

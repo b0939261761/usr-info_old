@@ -31,8 +31,13 @@ module.exports = class {
 
   // -------------------------------
 
-  static get tags() {
-    return `п_${formatDate('DD.MM.YYYY')}`;
+  get tags() {
+    const { address } = this.organization;
+    let tags = [formatDate('DD.MM.YYYY')];
+    if (/(Київська обл\.)|(м\.Київ)/.test(address)) tags.unshift('Київщина');
+    if (/(Тернопільська)|(Львівська) обл\./.test(address)) tags.unshift('Галичина');
+    if (/(Харківська)|(Полтавська) обл\./.test(address)) tags.unshift('Слобожанщина');
+    return tags.join(',');
   }
 
   // -------------------------------
@@ -42,7 +47,7 @@ module.exports = class {
       add: [{
         name: this.fullName,
         responsible_user_id: this.responsibleUserId,
-        tags: this.constructor.tags
+        tags: this.tags
       }]
     };
   }
@@ -54,7 +59,7 @@ module.exports = class {
       name: this.organization.manager,
       company_id: this.companyId,
       responsible_user_id: this.responsibleUserId,
-      tags: this.constructor.tags,
+      tags: this.tags,
       custom_fields: [{
         id: 212713,
         values: [{
@@ -118,7 +123,7 @@ module.exports = class {
       responsible_user_id: this.responsibleUserId,
       contacts_id: this.contactId,
       company_id: this.companyId,
-      tags: this.constructor.tags
+      tags: this.tags
     };
   }
 

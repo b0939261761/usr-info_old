@@ -2,8 +2,7 @@ const routes = require('express').Router();
 const Busboy = require('busboy');
 const readline = require('readline');
 const { catchAsyncRoute } = require('../utils/tools');
-const { getProxies, addProxies, getAmountProxy } = require('../db');
-
+const { getProxies, addProxies, getAmountProxy, resetErrorProxies } = require('../db');
 
 routes.get('', catchAsyncRoute(async (req, res) => res.json(await getProxies())));
 
@@ -18,14 +17,7 @@ routes.post('', catchAsyncRoute(async (req, res, next) => {
   const fieldNames = [];
   const errors = [];
 
-  const busboyOnFile = async (fieldName, file, fileName, encoding, mimeType) => {
-    // if (mimeType !== 'text/csv') {
-    //   const error = new Error('INVALID_TYPE_FILE');
-    //   error.fieldName = fieldName;
-    //   error.fileName = fileName;
-    //   return next(error);
-    // }
-
+  const busboyOnFile = async (fieldName, file) => {
     fieldNames.push(fieldName);
     try {
       const buffer = [];
@@ -66,7 +58,11 @@ routes.post('', catchAsyncRoute(async (req, res, next) => {
   return req.pipe(busboy);
 }));
 
-
 routes.get('/amount', catchAsyncRoute(async (req, res) => res.json(await getAmountProxy())));
+
+routes.get('/reset-error', catchAsyncRoute(async (req, res) => {
+  await resetErrorProxies();
+  res.json(await getProxies());
+}));
 
 module.exports = routes;
