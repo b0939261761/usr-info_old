@@ -1,25 +1,12 @@
-const getPhone = value => {
-  const phone = ((value && value[1]) || '').replace(/ /g, '');
-  if (/\+(?!0|38|30|80)/.test(phone)) return '';
-
-  const phoneSimple = phone.replace(/(\+80)|(\+380)|\D/g, '').slice(-9);
-  if (phoneSimple.length < 9 || phoneSimple[0] === '0') return '';
-  return `+380${phoneSimple}`;
-};
+const getPhone = value => ((value && value[1]) || '').replace(/\)|\(|-/g, '');
 
 const getPhones = value => {
-  const phones = [...value.matchAll(/(?:Телефон .: )(.+)/gm)];
-
+  const phones = [...value.matchAll(/(?:Телефон .: )(\S+)(?: |$)/g)];
   let phone1 = getPhone(phones[0]);
   let phone2 = getPhone(phones[1]);
 
-  if (!phone1 && phone2) {
-    phone1 = phone2;
-    phone2 = '';
-  }
-
+  if (!phone1 && phone2) [phone1, phone2] = [phone2, ''];
   if (phone1 === phone2) phone2 = '';
-
   return { phone1, phone2 };
 };
 
@@ -28,26 +15,17 @@ const validEmail = email => {
   return re.test(email);
 };
 
-const getEmail = (value = '') => {
-  const email = value.replace(/ |(\.$)/g, '').toLowerCase();
-  return validEmail(email) ? email : '';
-};
+const getEmail = ({ 1: value } = {}) => (validEmail(value) ? value.toLowerCase() : '');
 
 const getEmails = value => {
-  const emails = value.match(/(?:Адреса електронної пошти: )(.+)/m);
-  if (!emails) return { email1: '', email2: '' };
-  const emailList = emails[1].split(/,|;| {2}/).filter(el => el);
+  const email1Tmp = value.match(/(?:Адреса електронної пошти: )(\S+)(?: |$)/) || undefined;
+  const email2Tmp = value.match(/(?:Веб сторінка: )(\S+)(?: |$)/) || undefined;
 
-  let email1 = getEmail(emailList[0]);
-  let email2 = getEmail(emailList[1]);
+  let email1 = getEmail(email1Tmp);
+  let email2 = getEmail(email2Tmp);
 
-  if (!email1 && email2) {
-    email1 = email2;
-    email2 = '';
-  }
-
+  if (!email1 && email2) [email1, email2] = [email2, ''];
   if (email1 === email2) email2 = '';
-
   return { email1, email2 };
 };
 
