@@ -34,9 +34,10 @@ module.exports = class {
   get tags() {
     const { address } = this.organization;
     let tags = [formatDate('DD.MM.YYYY')];
-    if (/(Київська обл\.)|(м\.Київ)/.test(address)) tags.unshift('Київщина');
-    if (/(Тернопільська)|(Львівська) обл\./.test(address)) tags.unshift('Галичина');
-    if (/(Харківська)|(Полтавська) обл\./.test(address)) tags.unshift('Слобожанщина');
+    if (/місто Київ/.test(address)) tags.unshift('Київ');
+    else if (/Київська обл\./.test(address)) tags.unshift('Київщина');
+    // else if (/(Тернопільська)|(Львівська) обл\./.test(address)) tags.unshift('Галичина');
+    // else if (/(Харківська)|(Полтавська) обл\./.test(address)) tags.unshift('Слобожанщина');
     return tags.join(',');
   }
 
