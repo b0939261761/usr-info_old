@@ -108,7 +108,7 @@ module.exports = async ({ proxy, code }) => {
       eval(eval(findCaptchaText)()[0].callback)(captchaToken);
     }, { captchaToken, findCaptchaText: `${findCaptcha}` });
 
-    await page.waitFor(1000);
+    await page.waitForTimeout(1000);
     await page.click('recaptcha-wrapper button');
 
     const searchResultTable = await page.waitForSelector('search-result-table');
