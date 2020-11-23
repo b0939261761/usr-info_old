@@ -10,6 +10,7 @@ const sendMarketing = require('./sendMarketing');
 const AmoCRM = require('./amoCRM');
 const checkStatus = require('../organization/checkStatus');
 const { formatDate, subtractDays } = require('../utils/date');
+const { exists } = require('../db/db');
 
 const MIN_BALANCE = 1;
 const amoCRM = new AmoCRM();
@@ -49,18 +50,29 @@ const checkDateToWork = async dateRegistration => {
 
 (async () => {
   const proxyItem = new ProxyItem();
+  let prevCode = '43904649';
 
   for (let prevError = new Error(''); ;) {
     try {
+      const code = nextCode(prevCode);
+      console.info(`CODE: ${code}`);
+      if (await db.existsOrganization(code)) {
+        prevCode = code;
+        continue;
+      }
+
+      if (code === '43914018') {
+        console.info('CANCEL -----------------');
+        break;
+      }
       const lastOrganization = (await db.getLastOrganization()) || {};
       if (!await checkDateToWork(lastOrganization.dateRegistration)) continue;
       if ((await getCaptchaBalance()) < MIN_BALANCE) throw new Error('CAPTCHA_NO_BALANCE');
       const proxy = await proxyItem.get();
-      const code = nextCode(lastOrganization.code || '43311880');
-      console.info(`Code: ${code}`);
       const organization = await grabber({ proxy, code });
       await proxyItem.resetError();
       const organizationDB = await db.addOrganization(organization);
+      prevCode = code;
       await sendMarketing(organizationDB);
       await sendContacts();
     } catch (err) {

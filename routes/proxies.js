@@ -2,7 +2,7 @@ const routes = require('express').Router();
 const Busboy = require('busboy');
 const readline = require('readline');
 const { catchAsyncRoute } = require('../utils/tools');
-const { getProxies, addProxies, getAmountProxy, resetErrorProxies } = require('../db');
+const { getProxies, addProxies, removeProxies, getAmountProxy, resetErrorProxies } = require('../db');
 
 routes.get('', catchAsyncRoute(async (req, res) => res.json(await getProxies())));
 
@@ -56,6 +56,11 @@ routes.post('', catchAsyncRoute(async (req, res, next) => {
   busboy.on('file', busboyOnFile);
   busboy.on('finish', () => !fieldNames.length && next(new Error('NO_FILES')));
   return req.pipe(busboy);
+}));
+
+routes.get('/remove', catchAsyncRoute(async (req, res) => {
+  await removeProxies();
+  res.json(await getProxies());
 }));
 
 routes.get('/amount', catchAsyncRoute(async (req, res) => res.json(await getAmountProxy())));

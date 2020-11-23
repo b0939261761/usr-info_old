@@ -10,6 +10,12 @@ exports.getLastOrganization = () => connection.maybeOne(sql`
 
 //-----------------------------
 
+exports.existsOrganization = async code => (await connection.maybeOne(sql`
+  SELECT true AS exists FROM "Organizations" WHERE code = ${code} LIMIT 1;
+`))?.exists;
+
+//-----------------------------
+
 const whereFragmentGetOrganizations = ({
   status, year, month, day
 } = {}) => {

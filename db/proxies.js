@@ -30,6 +30,10 @@ exports.getProxies = async () => (await connection.query(sql`
 
 //-----------------------------
 
+exports.removeProxies = () => connection.query(sql`DELETE * FROM "Proxies"`);
+
+//-----------------------------
+
 exports.setErrorProxy = id => connection.query(sql`
   UPDATE "Proxies" SET "amountErrors" = "amountErrors" + 1 WHERE id = ${id}
 `);

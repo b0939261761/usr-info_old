@@ -17,7 +17,7 @@ services:
       - db
 
   db:
-    image: postgres:12.3-alpine
+    image: postgres:12.5-alpine
     ports:
       - $POSTGRES_PORT:5432
     volumes:
@@ -28,7 +28,7 @@ services:
       POSTGRES_DB: $POSTGRES_DB
 
   nginx:
-    image: nginx:1.19.1-alpine
+    image: nginx:1.19.4-alpine
     depends_on:
       - server
     volumes:
