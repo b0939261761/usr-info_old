@@ -10,7 +10,7 @@ const sendMarketing = require('./sendMarketing');
 const AmoCRM = require('./amoCRM');
 const checkStatus = require('../organization/checkStatus');
 const { formatDate, subtractDays } = require('../utils/date');
-const { exists } = require('../db/db');
+// const { exists } = require('../db/db');
 
 const MIN_BALANCE = 1;
 const amoCRM = new AmoCRM();
