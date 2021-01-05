@@ -24,27 +24,24 @@ npm run serve
 
   # Get balance
   /balance
-
-  # Generate code
-  /generateCode?code=0000000
 ```
 
 ## Add service
 
 ```bash
-vi /lib/systemd/system/usr-info.service
+vi /lib/systemd/system/usrInfo.service
 ```
 
 ```txt
 [Unit]
-Description=Parse for usr-info
+Description=Parse for usr info
 After=docker.service
 Conflicts=shutdown.target reboot.target halt.target
 
 [Service]
 Restart=always
 RestartSec=10
-WorkingDirectory=/root/usr-info
+WorkingDirectory=/root/usrInfo
 ExecStart=/usr/local/bin/docker-compose up
 ExecStop=/usr/local/bin/docker-compose down
 LimitNOFILE=infinity
@@ -55,6 +52,14 @@ TimeoutStopSec=30
 StartLimitBurst=3
 StartLimitInterval=60s
 NotifyAccess=all
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl enable usrInfo
+sudo systemctl start usrInfo
 ```
 
 for me: [](https://github.com/ThomWright/postgres-migrations)

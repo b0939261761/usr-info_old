@@ -1,18 +1,15 @@
 {
   "name": "usr-info",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "start": "npx cross-env NODE_ENV=production node index.js",
-    "serve": "npx cross-env NODE_ENV=development nodemon --inspect | roarr pretty-print",
-    "db:migrate": "npx cross-env NODE_ENV=development knex migrate:latest",
-    "db:rollback": "npx cross-env NODE_ENV=development knex migrate:down",
-    "db:migrate:production": "npx cross-env NODE_ENV=production knex migrate:latest",
-    "db:rollback:production": "npx cross-env NODE_ENV=production knex migrate:down"
+    "serve": "nodemon -r dotenv/config --inspect | roarr pretty-print"
   },
   "engines": {
-    "node": ">=14.15.1"
+    "node": "15.5.0",
+    "npm": "7.3.0"
   },
   "keywords": [],
   "author": "",
@@ -24,9 +21,7 @@
     "axios": "^0.21.0",
     "busboy": "^0.3.1",
     "cron": "^1.8.2",
-    "dotenv": "^8.2.0",
     "express": "^4.17.1",
-    "knex": "^0.21.12",
     "mysql2": "^2.2.5",
     "nodemailer": "^6.4.16",
     "pg": "^8.5.1",
@@ -36,11 +31,9 @@
   },
   "devDependencies": {
     "@roarr/cli": "^3.2.0",
-    "babel-eslint": "^10.1.0",
-    "cross-env": "^7.0.2",
+    "dotenv": "^8.2.0",
     "eslint": "^7.14.0",
     "eslint-config-airbnb": "^18.2.1",
-    "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-node": "^11.1.0",
     "nodemon": "^2.0.6"
   }
